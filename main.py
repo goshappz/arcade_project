@@ -109,6 +109,7 @@ class GameView(arcade.View):
         ...
 
 
+
 window = arcade.Window(800, 600, "Учимся ставить на паузу")
 menu_view = MenuView()
 window.show_view(menu_view)
