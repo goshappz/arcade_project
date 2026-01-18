@@ -3,10 +3,10 @@ from arcade.gui import UIManager, UIFlatButton, UITextureButton, UILabel, UIInpu
     UIMessageBox
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 from pyglet.graphics import Batch
+import math
 
 width = 800
 height = 600
-
 
 class MenuView(arcade.View):
     def __init__(self):
@@ -45,9 +45,6 @@ class MenuView(arcade.View):
     def on_draw(self):
         self.clear()
         self.manager.draw()  # Рисуй GUI поверх всего
-
-    def on_mouse_press(self, x, y, button, modifiers):
-        pass  # Для кликов, но manager сам обрабатывает
 
     def play_game(self, event):
         level_selecton = LevelSelectionView()
@@ -89,28 +86,89 @@ class LevelSelectionView(arcade.View):
         pass  # Для кликов, но manager сам обрабатывает
 
     def play_level_1(self, event):
-        game_view = GameView()
+        game_view = Level1View()
         self.window.show_view(game_view)
 
-class GameView(arcade.View):
+class Enemy(arcade.SpriteSolidColor):
+    def __init__(self, path_points: list[tuple[float, float]], speed: float = 120):
+        super().__init__(width=24, height=24, color=arcade.color.RED)
+
+        self.path = path_points
+        self.speed = speed
+        self.path_index = 0
+
+        self.center_x, self.center_y = self.path[0]
+
+    def update(self, delta_time: float = 1/60):
+        if self.path_index >= len(self.path) - 1:
+            return
+
+        dest_x, dest_y = self.path[self.path_index + 1]
+        dx = dest_x - self.center_x
+        dy = dest_y - self.center_y
+        dist = math.hypot(dx, dy)
+        if dist == 0:
+            self.path_index += 1
+            return
+
+        step = self.speed * delta_time
+
+        if dist <= step:
+            self.center_x, self.center_y = dest_x, dest_y
+            self.path_index += 1
+        else:
+            self.center_x += dx / dist * step
+            self.center_y += dy / dist * step
+
+    def reached_end(self) -> bool:
+        return self.path_index >= len(self.path) - 1
+
+class GameBase(arcade.View):
+    path = None
     def __init__(self):
         super().__init__()
-        arcade.set_background_color(arcade.color.BLACK_BEAN)
+        self.enemies = arcade.SpriteList()
+        self.spawn_timer = 0.0
+        self.base_hp = 20
+
+    def on_show_view(self):
+        self.enemies = arcade.SpriteList()
+        self.spawn_timer = 0.0
+        self.base_hp = 20
+
+    def spawn_enemy(self):
+        self.enemies.append(Enemy(self.path, speed=100))
+
+    def on_update(self, delta_time: float):
+        self.spawn_timer += delta_time
+        if self.spawn_timer >= 1.0:
+            self.spawn_timer = 0.0
+            self.spawn_enemy()
+
+        self.enemies.update(delta_time)
+
+        for i in list(self.enemies):
+            if i.reached_end():
+                self.base_hp -= 1
+                i.remove_from_sprite_lists()
+
+        if self.base_hp <= 0:
+            self.window.show_view(MenuView())
 
     def on_draw(self):
         self.clear()
-        # Рисуем спрайты, сцену...
 
-    def on_update(self, delta_time):
-        # Обновляем физику
-        ...
+        arcade.draw_line_strip(self.path, arcade.color.GRAY, 3)
+        for x, y in self.path:
+            arcade.draw_circle_filled(x, y, 5, arcade.color.ORANGE)
 
-    def on_key_press(self, key, modifiers):
-        ...
+        self.enemies.draw()
+        arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.WHITE, 16)
+class Level1View(GameBase):
+    path = [(64, 320), (256, 320), (256, 128), (640, 128)]
 
 
-
-window = arcade.Window(800, 600, "Учимся ставить на паузу")
+window = arcade.Window(width, height, "Tower Defense")
 menu_view = MenuView()
 window.show_view(menu_view)
 arcade.run()
