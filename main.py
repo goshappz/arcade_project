@@ -90,7 +90,7 @@ class LevelSelectionView(arcade.View):
         self.window.show_view(game_view)
 
 class Enemy(arcade.SpriteSolidColor):
-    def __init__(self, path_points: list[tuple[float, float]], speed: float = 120):
+    def __init__(self, path_points, speed = 120):
         super().__init__(width=24, height=24, color=arcade.color.RED)
 
         self.path = path_points
@@ -139,7 +139,7 @@ class GameBase(arcade.View):
     def spawn_enemy(self):
         self.enemies.append(Enemy(self.path, speed=100))
 
-    def on_update(self, delta_time: float):
+    def on_update(self, delta_time):
         self.spawn_timer += delta_time
         if self.spawn_timer >= 1.0:
             self.spawn_timer = 0.0
