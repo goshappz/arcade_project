@@ -138,7 +138,7 @@ class Enemy(arcade.SpriteSolidColor):
             self.center_x += dx / dist * step
             self.center_y += dy / dist * step
 
-    def reached_end(self) -> bool:
+    def reached_end(self):
         return self.path_index >= len(self.path) - 1
 
 
