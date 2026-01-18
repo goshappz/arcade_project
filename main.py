@@ -4,9 +4,9 @@ from arcade.gui import UIManager, UIFlatButton, UITextureButton, UILabel, UIInpu
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 from pyglet.graphics import Batch
 import math
+import random
 
-width = 800
-height = 600
+
 tower_types = {"apple": {'cost': 50, 'color': arcade.color.RED, 'size': 34}, }
 
 
@@ -88,7 +88,6 @@ class LevelSelectionView(arcade.View):
         self.manager.add(label)
         self.manager.add(button_level_1)
 
-
     def on_draw(self):
         self.clear()
         self.manager.draw()  # Рисуй GUI поверх всего
@@ -107,10 +106,14 @@ class LevelSelectionView(arcade.View):
     def on_hide_view(self):
         self.manager.disable()
 
-class Enemy(arcade.SpriteSolidColor):
-    def __init__(self, path_points, speed=120):
-        super().__init__(width=24, height=24, color=arcade.color.RED)
 
+class Enemy(arcade.Sprite):
+    def __init__(self, path_points, speed=200, hp=1, scale=0.05,
+                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'):
+
+        super().__init__(img, scale=scale)
+
+        self.hp = hp
         self.path = path_points
         self.speed = speed
         self.path_index = 0
@@ -145,6 +148,9 @@ class Enemy(arcade.SpriteSolidColor):
 class GameBase(arcade.View):
     path = None
     build_place = list()
+    wave_lists = list()
+
+
 
     def __init__(self):
         super().__init__()
@@ -159,6 +165,9 @@ class GameBase(arcade.View):
         self.popup_anchor = None
         self.selected_spot = None
         self.open = False
+        self.wave = 0
+        self.pack = 0
+        self.spawned = 0
 
     def on_show_view(self):
         self.enemies = arcade.SpriteList()
@@ -178,8 +187,8 @@ class GameBase(arcade.View):
     def hide_ui(self):
         self.ui.disable()
 
-    def spawn_enemy(self):
-        self.enemies.append(Enemy(self.path, speed=100))
+    def spawn_enemy(self, enemy):
+        self.enemies.append(enemy(self.path))
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.open:
@@ -216,9 +225,27 @@ class GameBase(arcade.View):
 
     def on_update(self, delta_time):
         self.spawn_timer += delta_time
-        if self.spawn_timer >= 1.0:
-            self.spawn_timer = 0.0
-            self.spawn_enemy()
+        start = 0
+        start = 1
+
+        if self.wave <= len(self.wave_lists) - 1:
+            if self.pack <= len(self.wave_lists[self.wave]) - 1:
+                if self.spawned < self.wave_lists[self.wave][self.pack][0]:
+                    if self.spawn_timer >= 0.5:
+                        self.spawn_enemy(self.wave_lists[self.wave][self.pack][1])
+                        self.spawned += 1
+                        self.spawn_timer = 0.0
+                else:
+                    if self.spawn_timer >= 0.5:
+                        self.pack += 1
+                        self.spawned = 0
+                        self.spawn_timer = 0.0
+            else:
+                if self.spawn_timer >= 1.0:
+                    self.wave += 1
+                    self.pack = 0
+                    self.spawn_timer = 0.0
+
 
         self.enemies.update(delta_time)
 
@@ -248,14 +275,18 @@ class GameBase(arcade.View):
 class Level1View(GameBase):
     path = [(64, 500), (736, 500), (64, 128), (736, 128)]
     build_place = [(200, 450), (350, 450), (500, 450), (700, 200)]
+    # каждый список внутри списка - мобы волны
+    wave_lists = [[(1, Enemy)], [(4, Enemy), (2, Enemy)], [(3, Enemy)]]
+
 
 
 class BuildTowerPlace(arcade.SpriteSolidColor):
     def __init__(self, x, y, size=40):
-        super().__init__(size, size, arcade.color.DARK_SPRING_GREEN)
+        super().__init__(size, size, arcade.color.ROSE)
         self.center_x = x
         self.center_y = y
         self.taken = False
+
 
 
 class Tower(arcade.SpriteSolidColor):
@@ -266,8 +297,17 @@ class Tower(arcade.SpriteSolidColor):
         self.center_y = y
         self.tower_type = tower_type
 
+screen_info = arcade.get_screens()
+primary_screen = screen_info[0]
 
-window = arcade.Window(width, height, "Tower Defense")
+window = arcade.Window(
+            width=primary_screen.width,
+            height=primary_screen.height,
+            title="Tower Defense",
+            fullscreen=False,
+            resizable=False,
+            # style=arcade.Window.WINDOW_STYLE_BORDERLESS
+        )
 menu_view = MenuView()
 window.show_view(menu_view)
 arcade.run()
