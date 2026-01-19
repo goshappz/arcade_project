@@ -306,7 +306,7 @@ window = arcade.Window(
             title="Tower Defense",
             fullscreen=False,
             resizable=False,
-            # style=arcade.Window.WINDOW_STYLE_BORDERLESS
+            style=arcade.Window.WINDOW_STYLE_BORDERLESS
         )
 menu_view = MenuView()
 window.show_view(menu_view)
