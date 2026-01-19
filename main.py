@@ -145,10 +145,11 @@ class Enemy(arcade.Sprite):
         return self.path_index >= len(self.path) - 1
 
 class AppleTower(arcade.Sprite):
-    def __init__(self, path_points, speed=200, hp=1, scale=0.05,
-                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'):
-
-        super().__init__(img, scale=scale)
+    def __init__(self, x, y, scale=0.08):
+        super().__init__(self.img, scale=scale)
+        self.x = x
+        self.y = y
+        self.img = 'imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'
 
 class GameBase(arcade.View):
     path = None
