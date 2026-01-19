@@ -144,6 +144,11 @@ class Enemy(arcade.Sprite):
     def reached_end(self):
         return self.path_index >= len(self.path) - 1
 
+class AppleTower(arcade.Sprite):
+    def __init__(self, path_points, speed=200, hp=1, scale=0.05,
+                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'):
+
+        super().__init__(img, scale=scale)
 
 class GameBase(arcade.View):
     path = None
@@ -206,6 +211,7 @@ class GameBase(arcade.View):
 
     def open_tower_menu(self, spot):
         self.selected_spot = spot
+        spot.color = arcade.color.GREEN
         if self.popup_anchor:
             self.popup_anchor.remove_from_parent()
             self.popup_anchor = None
@@ -216,10 +222,11 @@ class GameBase(arcade.View):
         self.popup_anchor.add(box, anchor_x="center_x", anchor_y="center_y")
         self.ui.add(self.popup_anchor)
 
-    def close_tower_menu(self):
+    def close_tower_menu(self, spot):
         if self.popup_anchor:
             self.popup_anchor.remove_from_parent()
             self.popup_anchor = None
+        spot.color = arcade.color.GRAY
         self.open = False
         self.selected_spot = None
 
@@ -261,7 +268,7 @@ class GameBase(arcade.View):
         self.clear()
         self.ui.draw()
         arcade.draw_line_strip(self.path, arcade.color.GREEN, 10)
-        arcade.draw_text(f"Money: {self.money}", 10, 30, arcade.color.WHITE, 16)
+        arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.WHITE, 24)
         self.build_slots.draw()
         self.towers.draw()
         self.enemies.draw()
@@ -269,33 +276,36 @@ class GameBase(arcade.View):
             arcade.draw_circle_filled(x, y, 2, arcade.color.ORANGE)
 
         self.enemies.draw()
-        arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 16)
+        arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 24)
 
 
 class Level1View(GameBase):
-    path = [(64, 500), (736, 500), (64, 128), (736, 128)]
-    build_place = [(200, 450), (350, 450), (500, 450), (700, 200)]
+    path = [(64 * 2.5, 500 * 1.8), (736 * 2.5, 500 * 1.8), (64 * 2.5, 128 * 1.8), (736 * 2.5, 128 * 1.8)]
+    build_place = [(200 * 2.5, 450 * 1.8), (350 * 2.5, 450 * 1.8), (500 * 2.5, 450 * 1.8), (700 * 2.5, 200 * 1.8)]
     # каждый список внутри списка - мобы волны
     wave_lists = [[(1, Enemy)], [(4, Enemy), (2, Enemy)], [(3, Enemy)]]
 
 
 
 class BuildTowerPlace(arcade.SpriteSolidColor):
-    def __init__(self, x, y, size=40):
-        super().__init__(size, size, arcade.color.ROSE)
+    def __init__(self, x, y, size=80):
+        super().__init__(width=size, height=size, color=arcade.color.DARK_CYAN)
         self.center_x = x
         self.center_y = y
         self.taken = False
 
 
 
-class Tower(arcade.SpriteSolidColor):
+
+
+class Tower(arcade.Sprite):
     def __init__(self, x, y, tower_type):
-        cfg = tower_types[tower_type]
-        super().__init__(cfg["size"], cfg["size"], cfg["color"])
+        type = tower_types[tower_type]
+        super().__init__(type["size"], type["size"], type["color"])
         self.center_x = x
         self.center_y = y
         self.tower_type = tower_type
+
 
 screen_info = arcade.get_screens()
 primary_screen = screen_info[0]
