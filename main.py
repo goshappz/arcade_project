@@ -151,7 +151,9 @@ class AppleTower(arcade.Sprite):
         self.y = y
         self.img = 'imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'
 
+
 class GameBase(arcade.View):
+    background_path = None
     path = None
     build_place = list()
     wave_lists = list()
@@ -160,6 +162,7 @@ class GameBase(arcade.View):
 
     def __init__(self):
         super().__init__()
+        self.background_texture = arcade.load_texture(self.background_path)
         self.enemies = arcade.SpriteList()
         self.towers = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
@@ -267,6 +270,8 @@ class GameBase(arcade.View):
 
     def on_draw(self):
         self.clear()
+        texture_rectangle = arcade.XYWH(self.window.width // 2,self.window.height // 2, self.window.width, self.window.height)
+        arcade.draw_texture_rect(self.background_texture, texture_rectangle)
         self.ui.draw()
         arcade.draw_line_strip(self.path, arcade.color.GREEN, 10)
         arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.WHITE, 24)
@@ -283,14 +288,14 @@ class GameBase(arcade.View):
 class Level1View(GameBase):
     path = [(64 * 2.5, 500 * 1.8), (736 * 2.5, 500 * 1.8), (64 * 2.5, 128 * 1.8), (736 * 2.5, 128 * 1.8)]
     build_place = [(200 * 2.5, 450 * 1.8), (350 * 2.5, 450 * 1.8), (500 * 2.5, 450 * 1.8), (700 * 2.5, 200 * 1.8)]
+    background_path = "imgs/дорога1.png"
     # каждый список внутри списка - мобы волны
     wave_lists = [[(1, Enemy)], [(4, Enemy), (2, Enemy)], [(3, Enemy)]]
 
 
-
-class BuildTowerPlace(arcade.SpriteSolidColor):
-    def __init__(self, x, y, size=80):
-        super().__init__(width=size, height=size, color=arcade.color.DARK_CYAN)
+class BuildTowerPlace(arcade.Sprite):
+    def __init__(self, x, y, scale=2.0, texture_path="imgs/горшок.png"):
+        super().__init__(texture_path, scale)
         self.center_x = x
         self.center_y = y
         self.taken = False
