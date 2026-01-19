@@ -6,7 +6,6 @@ from pyglet.graphics import Batch
 import math
 import random
 
-
 tower_types = {"apple": {'cost': 50, 'color': arcade.color.RED, 'size': 34}, }
 
 
@@ -144,6 +143,7 @@ class Enemy(arcade.Sprite):
     def reached_end(self):
         return self.path_index >= len(self.path) - 1
 
+
 class AppleTower(arcade.Sprite):
     def __init__(self, x, y, scale=0.08):
         super().__init__(self.img, scale=scale)
@@ -157,8 +157,6 @@ class GameBase(arcade.View):
     path = None
     build_place = list()
     wave_lists = list()
-
-
 
     def __init__(self):
         super().__init__()
@@ -257,7 +255,6 @@ class GameBase(arcade.View):
                     self.pack = 0
                     self.spawn_timer = 0.0
 
-
         self.enemies.update(delta_time)
 
         for i in list(self.enemies):
@@ -270,7 +267,8 @@ class GameBase(arcade.View):
 
     def on_draw(self):
         self.clear()
-        texture_rectangle = arcade.XYWH(self.window.width // 2,self.window.height // 2, self.window.width, self.window.height)
+        texture_rectangle = arcade.XYWH(self.window.width // 2, self.window.height // 2, self.window.width,
+                                        self.window.height)
         arcade.draw_texture_rect(self.background_texture, texture_rectangle)
         self.ui.draw()
         arcade.draw_line_strip(self.path, arcade.color.GREEN, 10)
@@ -301,9 +299,6 @@ class BuildTowerPlace(arcade.Sprite):
         self.taken = False
 
 
-
-
-
 class Tower(arcade.Sprite):
     def __init__(self, x, y, tower_type):
         type = tower_types[tower_type]
@@ -317,13 +312,13 @@ screen_info = arcade.get_screens()
 primary_screen = screen_info[0]
 
 window = arcade.Window(
-            width=primary_screen.width,
-            height=primary_screen.height,
-            title="Tower Defense",
-            fullscreen=False,
-            resizable=False,
-            style=arcade.Window.WINDOW_STYLE_BORDERLESS
-        )
+    width=primary_screen.width,
+    height=primary_screen.height,
+    title="Tower Defense",
+    fullscreen=False,
+    resizable=False,
+    style=arcade.Window.WINDOW_STYLE_BORDERLESS
+)
 menu_view = MenuView()
 window.show_view(menu_view)
 arcade.run()
