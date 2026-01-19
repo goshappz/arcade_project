@@ -286,7 +286,7 @@ class GameBase(arcade.View):
 class Level1View(GameBase):
     path = [(64 * 2.5, 500 * 1.8), (736 * 2.5, 500 * 1.8), (64 * 2.5, 128 * 1.8), (736 * 2.5, 128 * 1.8)]
     build_place = [(200 * 2.5, 450 * 1.8), (350 * 2.5, 450 * 1.8), (500 * 2.5, 450 * 1.8), (700 * 2.5, 200 * 1.8)]
-    background_path = "imgs/дорога1.png"
+    background_path = "imgs/травазаготовка.png"
     # каждый список внутри списка - мобы волны
     wave_lists = [[(1, Enemy)], [(4, Enemy), (2, Enemy)], [(3, Enemy)]]
 
