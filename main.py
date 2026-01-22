@@ -6,7 +6,7 @@ from pyglet.graphics import Batch
 import math
 import random
 
-tower_types = {"apple": {'cost': 50, 'color': arcade.color.RED, 'size': 34}, }
+tower_types = {"apple": 50}
 
 
 class MenuView(arcade.View):
@@ -144,14 +144,6 @@ class Enemy(arcade.Sprite):
         return self.path_index >= len(self.path) - 1
 
 
-class AppleTower(arcade.Sprite):
-    def __init__(self, x, y, scale=0.08):
-        super().__init__(self.img, scale=scale)
-        self.x = x
-        self.y = y
-        self.img = 'imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'
-
-
 class GameBase(arcade.View):
     background_path = None
     path = None
@@ -162,8 +154,8 @@ class GameBase(arcade.View):
         super().__init__()
         self.background_texture = arcade.load_texture(self.background_path)
         self.enemies = arcade.SpriteList()
-        self.towers = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
+        self.towers = arcade.SpriteList()
         self.money = 200
         self.spawn_timer = 0.0
         self.base_hp = 20
@@ -182,8 +174,8 @@ class GameBase(arcade.View):
         self.base_hp = 20
 
         self.enemies = arcade.SpriteList()
-        self.towers = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
+        self.towers = arcade.SpriteList()
 
         for x, y in self.build_place:
             self.build_slots.append(BuildTowerPlace(x, y))
@@ -212,25 +204,45 @@ class GameBase(arcade.View):
         self.open_tower_menu(spot)
 
     def open_tower_menu(self, spot):
+        self.open = True
         self.selected_spot = spot
         spot.color = arcade.color.GREEN
-        if self.popup_anchor:
-            self.popup_anchor.remove_from_parent()
-            self.popup_anchor = None
-        box = UIBoxLayout(vertical=True, space_between=5)
-        button1 = UIFlatButton(text=f'Обычная {tower_types["apple"]["cost"]}', width=220, height=40)
-        box.add(button1)
-        self.popup_anchor = UIAnchorLayout()
-        self.popup_anchor.add(box, anchor_x="center_x", anchor_y="center_y")
-        self.ui.add(self.popup_anchor)
+
+        self.button1 = UIFlatButton(text=f'Яблоня {tower_types["apple"]}', width=220, height=40)
+        self.button1.center_x = spot.center_x
+        self.button1.center_y = spot.center_y + 50
+        self.button1.on_click = lambda build_apple: self.build_tower("apple")
+
+        self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40)
+        self.leave_menu_button.center_x = spot.center_x
+        self.leave_menu_button.center_y = spot.center_y - 50
+        self.leave_menu_button.on_click  = lambda leave: self.close_tower_menu(spot)
+
+        self.ui.add(self.button1)
+        self.ui.add(self.leave_menu_button)
 
     def close_tower_menu(self, spot):
-        if self.popup_anchor:
-            self.popup_anchor.remove_from_parent()
-            self.popup_anchor = None
+        self.ui.remove(self.button1)
+        self.ui.remove(self.leave_menu_button)
         spot.color = arcade.color.GRAY
         self.open = False
         self.selected_spot = None
+
+    def build_tower(self, tower_type):
+        cost = tower_types[tower_type]
+        if self.money < cost:
+            return
+        if tower_type == "apple":
+            spot = self.selected_spot
+            tower = AppleTower(spot.center_x, spot.center_y + 45)
+            self.towers.append(tower)
+
+            self.build_slots.remove(spot)
+            spot.taken = True
+            spot.color = arcade.color.DARK_GRAY
+            self.money -= cost
+            self.close_tower_menu(spot)
+
 
     def on_update(self, delta_time):
         self.spawn_timer += delta_time
@@ -256,6 +268,7 @@ class GameBase(arcade.View):
                     self.spawn_timer = 0.0
 
         self.enemies.update(delta_time)
+        self.towers.update(delta_time)
 
         for i in list(self.enemies):
             if i.reached_end():
@@ -270,7 +283,6 @@ class GameBase(arcade.View):
         texture_rectangle = arcade.XYWH(self.window.width // 2, self.window.height // 2, self.window.width,
                                         self.window.height)
         arcade.draw_texture_rect(self.background_texture, texture_rectangle)
-        self.ui.draw()
         arcade.draw_line_strip(self.path, arcade.color.GREEN, 10)
         arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.WHITE, 24)
         self.build_slots.draw()
@@ -281,6 +293,7 @@ class GameBase(arcade.View):
 
         self.enemies.draw()
         arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 24)
+        self.ui.draw()
 
 
 class Level1View(GameBase):
@@ -298,14 +311,12 @@ class BuildTowerPlace(arcade.Sprite):
         self.center_y = y
         self.taken = False
 
-
-class Tower(arcade.Sprite):
-    def __init__(self, x, y, tower_type):
-        type = tower_types[tower_type]
-        super().__init__(type["size"], type["size"], type["color"])
+class AppleTower(arcade.Sprite):
+    def __init__(self, x, y, scale=2.0, img='imgs/яблонявгоршке.png'):
+        super().__init__(img, scale=scale)
         self.center_x = x
         self.center_y = y
-        self.tower_type = tower_type
+
 
 
 screen_info = arcade.get_screens()
