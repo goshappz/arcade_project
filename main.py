@@ -107,7 +107,7 @@ class LevelSelectionView(arcade.View):
 
 
 class Enemy(arcade.Sprite):
-    def __init__(self, path_points, speed=200, hp=1, scale=0.05,
+    def __init__(self, path_points, speed=100, hp=100, scale=0.05,
                  img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'):
 
         super().__init__(img, scale=scale)
@@ -156,6 +156,7 @@ class GameBase(arcade.View):
         self.enemies = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
         self.towers = arcade.SpriteList()
+        self.projectiles = arcade.SpriteList()
         self.money = 200
         self.spawn_timer = 0.0
         self.base_hp = 20
@@ -176,6 +177,7 @@ class GameBase(arcade.View):
         self.enemies = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
         self.towers = arcade.SpriteList()
+        self.projectiles.draw()
 
         for x, y in self.build_place:
             self.build_slots.append(BuildTowerPlace(x, y))
@@ -216,7 +218,7 @@ class GameBase(arcade.View):
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40)
         self.leave_menu_button.center_x = spot.center_x
         self.leave_menu_button.center_y = spot.center_y - 50
-        self.leave_menu_button.on_click  = lambda leave: self.close_tower_menu(spot)
+        self.leave_menu_button.on_click = lambda leave: self.close_tower_menu(spot)
 
         self.ui.add(self.button1)
         self.ui.add(self.leave_menu_button)
@@ -243,7 +245,6 @@ class GameBase(arcade.View):
             self.money -= cost
             self.close_tower_menu(spot)
 
-
     def on_update(self, delta_time):
         self.spawn_timer += delta_time
         start = 0
@@ -269,6 +270,7 @@ class GameBase(arcade.View):
 
         self.enemies.update(delta_time)
         self.towers.update(delta_time)
+        self.projectiles.update(delta_time)
 
         for i in list(self.enemies):
             if i.reached_end():
@@ -278,6 +280,17 @@ class GameBase(arcade.View):
         if self.base_hp <= 0:
             self.window.show_view(MenuView())
 
+        for tower in self.towers:
+            tower.update_tower(delta_time, self.enemies, self.projectiles)
+
+        for projectile in self.projectiles:
+            hit = arcade.check_for_collision_with_list(projectile, self.enemies)
+            if hit:
+                enemy = hit[0]
+                enemy.hp -= projectile.damage
+                if enemy.hp <= 0:
+                    enemy.remove_from_sprite_lists()
+
     def on_draw(self):
         self.clear()
         texture_rectangle = arcade.XYWH(self.window.width // 2, self.window.height // 2, self.window.width,
@@ -285,9 +298,12 @@ class GameBase(arcade.View):
         arcade.draw_texture_rect(self.background_texture, texture_rectangle)
         arcade.draw_line_strip(self.path, arcade.color.GREEN, 10)
         arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.WHITE, 24)
+
         self.build_slots.draw()
         self.towers.draw()
         self.enemies.draw()
+        self.projectiles.draw()
+
         for x, y in self.path:
             arcade.draw_circle_filled(x, y, 2, arcade.color.ORANGE)
 
@@ -311,12 +327,70 @@ class BuildTowerPlace(arcade.Sprite):
         self.center_y = y
         self.taken = False
 
+
 class AppleTower(arcade.Sprite):
     def __init__(self, x, y, scale=2.0, img='imgs/яблонявгоршке.png'):
         super().__init__(img, scale=scale)
         self.center_x = x
         self.center_y = y
 
+        self.range = 300
+        self.fire_rate = 0.6
+        self.cooldown = 0.0
+        self.damage = 1
+        self.projectile_speed = 600
+
+    def update_tower(self, delta_time, enemies, projectiles):
+        self.cooldown -= delta_time
+        if self.cooldown > 0:
+            return
+        target = self.find_target(enemies)
+        if not target:
+            return
+
+        projectile = Projectile(self.center_x, self.center_y, target.center_x, target.center_y, speed=300, damage=5)
+        projectiles.append(projectile)
+        self.cooldown = 1.0 / self.fire_rate
+
+    def find_target(self, enemies):
+        ans = None
+        distant = self.range
+
+        for i in enemies:
+            d = math.hypot(i.center_x - self.center_x, i.center_y - self.center_y)
+            if d <= self.range:
+                distant = d
+                ans = i
+        return ans
+
+
+class Projectile(arcade.Sprite):
+    def __init__(self, start_x, start_y, target_x, target_y, speed=800, damage=10):
+        super().__init__()
+        self.texture = arcade.load_texture(":resources:/images/space_shooter/laserBlue01.png")
+        self.center_x = start_x
+        self.center_y = start_y
+        self.speed = speed
+        self.damage = damage
+
+        x_diff = target_x - start_x
+        y_diff = target_y - start_y
+        angle = math.atan2(y_diff, x_diff)
+        # И скорость
+        self.change_x = math.cos(angle) * speed
+        self.change_y = math.sin(angle) * speed
+        # Если текстура ориентирована по умолчанию вправо, то поворачиваем пулю в сторону цели
+        # Для другой ориентации нужно будет подправить угол
+        self.angle = math.degrees(-angle)  # Поворачиваем пулю
+
+    def update(self, delta_time):
+        # Удаляем пулю, если она ушла за экран
+        if (self.center_x < 0 or self.center_x > primary_screen.width or
+                self.center_y < 0 or self.center_y > primary_screen.height):
+            self.remove_from_sprite_lists()
+
+        self.center_x += self.change_x * delta_time
+        self.center_y += self.change_y * delta_time
 
 
 screen_info = arcade.get_screens()
