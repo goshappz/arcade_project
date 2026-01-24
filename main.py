@@ -443,7 +443,8 @@ class GameBase(arcade.View):
                 enemy.hp -= projectile.damage
                 if enemy.hp <= 0:
                     self.money += enemy.money
-                    self.kills += 1
+                    if enemy in self.enemies:
+                        self.kills += 1
                     enemy.remove_from_sprite_lists()
                 projectile.remove_from_sprite_lists()
 
