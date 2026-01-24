@@ -395,7 +395,6 @@ class GameBase(arcade.View):
                 self.spawn_timer = 0
             self.start = 1
             if self.wave <= self.waves - 1:
-                print(self.waves)
                 if self.pack <= len(self.wave_lists[self.wave]) - 1:
                     if self.spawned < self.wave_lists[self.wave][self.pack][0]:
                         if self.spawn_timer >= 0.5:
@@ -585,6 +584,6 @@ window = arcade.Window(
     resizable=False,
     style=arcade.Window.WINDOW_STYLE_BORDERLESS
 )
-menu_view = EndView('Lvl1', (42, 52), 'Win')
+menu_view = MenuView()
 window.show_view(menu_view)
 arcade.run()
