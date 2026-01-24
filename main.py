@@ -116,6 +116,7 @@ class Enemy(arcade.Sprite):
         self.path = path_points
         self.speed = speed
         self.path_index = 0
+        self.way = 0
 
         self.center_x, self.center_y = self.path[0]
 
@@ -132,6 +133,7 @@ class Enemy(arcade.Sprite):
             return
 
         step = self.speed * delta_time
+        self.way += step
 
         if dist <= step:
             self.center_x, self.center_y = dest_x, dest_y
@@ -253,7 +255,7 @@ class GameBase(arcade.View):
         if self.wave <= len(self.wave_lists) - 1:
             if self.pack <= len(self.wave_lists[self.wave]) - 1:
                 if self.spawned < self.wave_lists[self.wave][self.pack][0]:
-                    if self.spawn_timer >= 1:
+                    if self.spawn_timer >= 0.3:
                         self.spawn_enemy(self.wave_lists[self.wave][self.pack][1])
                         self.spawned += 1
                         self.spawn_timer = 0.0
@@ -284,9 +286,9 @@ class GameBase(arcade.View):
             tower.update_tower(delta_time, self.enemies, self.projectiles)
 
         for projectile in self.projectiles:
-            hit = arcade.check_for_collision_with_list(projectile, self.enemies)
+            hit = arcade.check_for_collision(projectile, projectile.enemy)
             if hit:
-                enemy = hit[0]
+                enemy = projectile.enemy
                 enemy.hp -= projectile.damage
                 if enemy.hp <= 0:
                     enemy.remove_from_sprite_lists()
@@ -355,14 +357,15 @@ class AppleTower(arcade.Sprite):
 
     def find_target(self, enemies):
         ans = None
-        distant = self.range
+        steps = -1
 
         for i in enemies:
             d = math.hypot(i.center_x - self.center_x, i.center_y - self.center_y)
-            if d <= distant:
-                distant = d
+            if d <= self.range and steps <= i.way:
+                steps = i.way
                 ans = i
         return ans
+
 
 
 class Projectile(arcade.Sprite):
@@ -376,7 +379,6 @@ class Projectile(arcade.Sprite):
         self.enemy = enemy
         self.target_x = self.enemy.center_x
         self.target_y = self.enemy.center_y
-
 
         x_diff = self.target_x - start_x
         y_diff = self.target_y - start_y
@@ -408,10 +410,6 @@ class Projectile(arcade.Sprite):
 
         self.center_x += self.change_x * delta_time
         self.center_y += self.change_y * delta_time
-
-
-
-
 
 
 screen_info = arcade.get_screens()
