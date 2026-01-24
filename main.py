@@ -114,7 +114,7 @@ class Enemy(arcade.Sprite):
 
         self.hp = hp
         self.path = path_points
-        self.speed = speed
+        self.speed = round(speed * random.randint(100, 125) / 100)
         self.path_index = 0
         self.way = 0
 
@@ -144,6 +144,18 @@ class Enemy(arcade.Sprite):
 
     def reached_end(self):
         return self.path_index >= len(self.path) - 1
+
+class Blue_Enemy(Enemy):
+    def __init__(self, path_points, speed=100, hp=150, scale=1,
+                 img='imgs/горшок.png'):
+        super().__init__(path_points, speed, hp, scale,
+                 img)
+
+class Red_Enemy(Enemy):
+    def __init__(self, path_points, speed=125, hp=100, scale=1,
+                 img='imgs/яблонявгоршке.png'):
+        super().__init__(path_points, speed, hp, scale,
+                 img)
 
 
 class GameBase(arcade.View):
@@ -255,7 +267,7 @@ class GameBase(arcade.View):
         if self.wave <= len(self.wave_lists) - 1:
             if self.pack <= len(self.wave_lists[self.wave]) - 1:
                 if self.spawned < self.wave_lists[self.wave][self.pack][0]:
-                    if self.spawn_timer >= 0.3:
+                    if self.spawn_timer >= 1:
                         self.spawn_enemy(self.wave_lists[self.wave][self.pack][1])
                         self.spawned += 1
                         self.spawn_timer = 0.0
@@ -320,7 +332,7 @@ class Level1View(GameBase):
     build_place = [(200 * 2.5, 450 * 1.8), (350 * 2.5, 450 * 1.8), (500 * 2.5, 450 * 1.8), (700 * 2.5, 200 * 1.8)]
     background_path = "imgs/травазаготовка.png"
     # каждый список внутри списка - мобы волны
-    wave_lists = [[(1, Enemy)], [(4, Enemy), (2, Enemy)], [(3, Enemy)]]
+    wave_lists = [[(1, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)], [(3, Enemy)]]
 
 
 class BuildTowerPlace(arcade.Sprite):
