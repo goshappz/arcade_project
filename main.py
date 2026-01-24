@@ -253,7 +253,7 @@ class GameBase(arcade.View):
         if self.wave <= len(self.wave_lists) - 1:
             if self.pack <= len(self.wave_lists[self.wave]) - 1:
                 if self.spawned < self.wave_lists[self.wave][self.pack][0]:
-                    if self.spawn_timer >= 0.5:
+                    if self.spawn_timer >= 1:
                         self.spawn_enemy(self.wave_lists[self.wave][self.pack][1])
                         self.spawned += 1
                         self.spawn_timer = 0.0
@@ -290,6 +290,7 @@ class GameBase(arcade.View):
                 enemy.hp -= projectile.damage
                 if enemy.hp <= 0:
                     enemy.remove_from_sprite_lists()
+                projectile.remove_from_sprite_lists()
 
     def on_draw(self):
         self.clear()
@@ -337,7 +338,7 @@ class AppleTower(arcade.Sprite):
         self.range = 300
         self.fire_rate = 0.6
         self.cooldown = 0.0
-        self.damage = 1
+        self.damage = 100
         self.projectile_speed = 600
 
     def update_tower(self, delta_time, enemies, projectiles):
@@ -348,7 +349,7 @@ class AppleTower(arcade.Sprite):
         if not target:
             return
 
-        projectile = Projectile(self.center_x, self.center_y, target.center_x, target.center_y, speed=300, damage=5)
+        projectile = Projectile(self.center_x, self.center_y, target, speed=300, damage=self.damage)
         projectiles.append(projectile)
         self.cooldown = 1.0 / self.fire_rate
 
@@ -358,23 +359,27 @@ class AppleTower(arcade.Sprite):
 
         for i in enemies:
             d = math.hypot(i.center_x - self.center_x, i.center_y - self.center_y)
-            if d <= self.range:
+            if d <= distant:
                 distant = d
                 ans = i
         return ans
 
 
 class Projectile(arcade.Sprite):
-    def __init__(self, start_x, start_y, target_x, target_y, speed=800, damage=10):
+    def __init__(self, start_x, start_y, enemy, speed=800, damage=10):
         super().__init__()
         self.texture = arcade.load_texture(":resources:/images/space_shooter/laserBlue01.png")
         self.center_x = start_x
         self.center_y = start_y
         self.speed = speed
         self.damage = damage
+        self.enemy = enemy
+        self.target_x = self.enemy.center_x
+        self.target_y = self.enemy.center_y
 
-        x_diff = target_x - start_x
-        y_diff = target_y - start_y
+
+        x_diff = self.target_x - start_x
+        y_diff = self.target_y - start_y
         angle = math.atan2(y_diff, x_diff)
         # И скорость
         self.change_x = math.cos(angle) * speed
@@ -388,9 +393,25 @@ class Projectile(arcade.Sprite):
         if (self.center_x < 0 or self.center_x > primary_screen.width or
                 self.center_y < 0 or self.center_y > primary_screen.height):
             self.remove_from_sprite_lists()
+        self.target_x = self.enemy.center_x
+        self.target_y = self.enemy.center_y
+
+        x_diff = self.target_x - self.center_x
+        y_diff = self.target_y - self.center_y
+        angle = math.atan2(y_diff, x_diff)
+        # И скорость
+        self.change_x = math.cos(angle) * self.speed
+        self.change_y = math.sin(angle) * self.speed
+        # Если текстура ориентирована по умолчанию вправо, то поворачиваем пулю в сторону цели
+        # Для другой ориентации нужно будет подправить угол
+        self.angle = math.degrees(-angle)
 
         self.center_x += self.change_x * delta_time
         self.center_y += self.change_y * delta_time
+
+
+
+
 
 
 screen_info = arcade.get_screens()
