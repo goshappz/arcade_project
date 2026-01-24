@@ -7,6 +7,10 @@ import math
 import random
 
 tower_types = {"apple": 50}
+screen_info = arcade.get_screens()
+primary_screen = screen_info[0]
+WIDHT = primary_screen.width
+HEIGHT = primary_screen.height
 
 
 class MenuView(arcade.View):
@@ -62,6 +66,81 @@ class MenuView(arcade.View):
         self.manager.disable()
 
 
+class EndView(arcade.View):
+    def __init__(self, name, stats, res):
+        super().__init__()
+        self.res = res
+        self.stats = stats
+        self.name = name
+        if res == 'Lose':
+            backcol = (205, 92, 92)
+            self.rescol = (255, 69, 0)
+            self.namecol = (255, 165, 0)
+        elif res == 'Win':
+            backcol = (60, 179, 113)
+            self.rescol = (0, 128, 0)
+            self.namecol = (107, 142, 35)
+        arcade.set_background_color(backcol)
+        self.manager = UIManager()
+        self.manager.enable()
+        self.setup_widgets()
+
+    def setup_widgets(self):
+        label_res = UILabel(text=self.res,
+                            font_size=100,
+                            text_color=self.rescol,
+                            width=300,
+                            multiline=True,
+                            align="center")
+        label_res.center_x = WIDHT // 2
+        label_res.center_y = round(((1080 - 350) / 1080) * HEIGHT)
+
+        label_sts = UILabel(text=f'Slimes killed: {self.stats[0]}/{self.stats[1]}',
+                            font_size=50,
+                            text_color=(255, 215, 0),
+                            width=400,
+                            multiline=True,
+                            align="center")
+        label_sts.center_x = WIDHT // 2
+        label_sts.center_y = round(((1080 - 700) / 1080) * HEIGHT)
+
+        label_name = UILabel(text=f'{self.name}:',
+                             font_size=50,
+                             text_color=self.namecol,
+                             width=300,
+                             multiline=True,
+                             align="center")
+        label_name.center_x = WIDHT // 2
+        label_name.center_y = round(((1080 - 250) / 1080) * HEIGHT)
+
+        button_ext = UIFlatButton(text='В меню', width=200, height=50, color=arcade.color.BLUE)
+        button_ext.on_click = self.ext
+        button_ext.center_x = WIDHT // 2
+        button_ext.center_y = round(((1080 - 900) / 1080) * HEIGHT)
+
+        self.manager.add(label_res)
+        self.manager.add(label_sts)
+        self.manager.add(label_name)
+        self.manager.add(button_ext)
+
+    def ext(self, event):
+        main_screen = MenuView()
+        self.window.show_view(main_screen)
+
+    def on_draw(self):
+        self.clear()
+        self.manager.draw()
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        pass
+
+    def on_show_view(self):
+        self.manager.enable()
+
+    def on_hide_view(self):
+        self.manager.disable()
+
+
 class LevelSelectionView(arcade.View):
     def __init__(self):
         super().__init__()
@@ -81,11 +160,20 @@ class LevelSelectionView(arcade.View):
                         align="center")
         label.center_x = 400
         label.center_y = 300
+
         button_level_1 = UIFlatButton(text='Первый уровень', width=200, height=50, color=arcade.color.BLUE)
         button_level_1.on_click = self.play_level_1
+        button_level_1.center_x = 100
+        button_level_1.center_y = 100
 
         self.manager.add(label)
         self.manager.add(button_level_1)
+
+        button_level_2 = UIFlatButton(text='Второй уровень', width=200, height=50, color=arcade.color.BLUE)
+        button_level_2.on_click = self.play_level_2
+
+        self.manager.add(label)
+        self.manager.add(button_level_2)
 
     def on_draw(self):
         self.clear()
@@ -98,6 +186,10 @@ class LevelSelectionView(arcade.View):
         game_view = Level1View()
         self.window.show_view(game_view)
 
+    def play_level_2(self, event):
+        game_view = Level2View()
+        self.window.show_view(game_view)
+
     def on_show_view(self):
         arcade.set_background_color(arcade.color.LIGHT_GRAY)
         self.manager.enable()
@@ -108,7 +200,7 @@ class LevelSelectionView(arcade.View):
 
 class Enemy(arcade.Sprite):
     def __init__(self, path_points, speed=100, hp=100, scale=0.05,
-                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png'):
+                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png', money=4):
 
         super().__init__(img, scale=scale)
 
@@ -117,6 +209,7 @@ class Enemy(arcade.Sprite):
         self.speed = round(speed * random.randint(100, 125) / 100)
         self.path_index = 0
         self.way = 0
+        self.money = round(money * random.randint(10, 20) / 10)
 
         self.center_x, self.center_y = self.path[0]
 
@@ -145,17 +238,19 @@ class Enemy(arcade.Sprite):
     def reached_end(self):
         return self.path_index >= len(self.path) - 1
 
+
 class Blue_Enemy(Enemy):
     def __init__(self, path_points, speed=100, hp=150, scale=1,
-                 img='imgs/горшок.png'):
+                 img='imgs/горшок.png', money=8):
         super().__init__(path_points, speed, hp, scale,
-                 img)
+                         img, money)
+
 
 class Red_Enemy(Enemy):
     def __init__(self, path_points, speed=125, hp=100, scale=1,
-                 img='imgs/яблонявгоршке.png'):
+                 img='imgs/яблонявгоршке.png', money=8):
         super().__init__(path_points, speed, hp, scale,
-                 img)
+                         img, money)
 
 
 class GameBase(arcade.View):
@@ -163,6 +258,7 @@ class GameBase(arcade.View):
     path = None
     build_place = list()
     wave_lists = list()
+    name = str()
 
     def __init__(self):
         super().__init__()
@@ -171,10 +267,16 @@ class GameBase(arcade.View):
         self.build_slots = arcade.SpriteList()
         self.towers = arcade.SpriteList()
         self.projectiles = arcade.SpriteList()
-        self.money = 200
+        self.money = 90
         self.spawn_timer = 0.0
-        self.base_hp = 20
-        self.ui = UIManager()
+        self.base_hp = 3
+        self.start = 0
+        self.kills = 0
+        self.mobs = 0
+        for i in self.wave_lists:
+            for x in i:
+                self.mobs += x[0]
+        self.waves = len(self.wave_lists)
 
         self.popup_anchor = None
         self.selected_spot = None
@@ -182,11 +284,34 @@ class GameBase(arcade.View):
         self.wave = 0
         self.pack = 0
         self.spawned = 0
+        self.ui = UIManager()
+        self.ui.enable()  # Включить, чтоб виджеты работали
+
+        # Добавим все виджеты в box, потом box в anchor
+        self.setup_widgets()
+
+    def setup_widgets(self):
+        self.wave_label = UILabel(text=f"Wave {self.wave}/{len(self.wave_lists)}",
+                                  font_size=55,
+                                  text_color=(0, 100, 0),
+                                  width=300,
+                                  multiline=True,
+                                  align="center")
+        self.wave_label.center_x = 1920 / 2
+        self.wave_label.center_y = 1080 - 100
+
+        button_ext = UIFlatButton(text='Выйти', width=150, height=50, color=arcade.color.BLUE)
+        button_ext.on_click = self.close_game
+        button_ext.center_x = 100
+        button_ext.center_y = HEIGHT - 50
+
+        self.ui.add(self.wave_label)
+        self.ui.add(button_ext)
+        self.ui.enable()
 
     def on_show_view(self):
         self.enemies = arcade.SpriteList()
         self.spawn_timer = 0.0
-        self.base_hp = 20
 
         self.enemies = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
@@ -196,11 +321,14 @@ class GameBase(arcade.View):
         for x, y in self.build_place:
             self.build_slots.append(BuildTowerPlace(x, y))
 
-        self.money = 200
         self.ui.enable()
 
     def hide_ui(self):
         self.ui.disable()
+
+    def close_game(self, event):
+        main_screen = MenuView()
+        self.window.show_view(main_screen)
 
     def spawn_enemy(self, enemy):
         self.enemies.append(enemy(self.path))
@@ -261,26 +389,35 @@ class GameBase(arcade.View):
 
     def on_update(self, delta_time):
         self.spawn_timer += delta_time
-        start = 0
-        start = 1
 
-        if self.wave <= len(self.wave_lists) - 1:
-            if self.pack <= len(self.wave_lists[self.wave]) - 1:
-                if self.spawned < self.wave_lists[self.wave][self.pack][0]:
-                    if self.spawn_timer >= 1:
-                        self.spawn_enemy(self.wave_lists[self.wave][self.pack][1])
-                        self.spawned += 1
-                        self.spawn_timer = 0.0
+        if self.spawn_timer >= 3 or self.start:
+            if not self.start:
+                self.spawn_timer = 0
+            self.start = 1
+            if self.wave <= self.waves - 1:
+                print(self.waves)
+                if self.pack <= len(self.wave_lists[self.wave]) - 1:
+                    if self.spawned < self.wave_lists[self.wave][self.pack][0]:
+                        if self.spawn_timer >= 0.5:
+                            self.spawn_enemy(self.wave_lists[self.wave][self.pack][1])
+                            self.spawned += 1
+                            self.spawn_timer = 0.0
+                    else:
+                        if self.spawn_timer >= 1:
+                            self.pack += 1
+                            self.spawned = 0
+                            self.spawn_timer = 0.0
                 else:
-                    if self.spawn_timer >= 0.5:
-                        self.pack += 1
-                        self.spawned = 0
+                    if self.spawn_timer >= 3.0:
+                        self.wave += 1
+                        self.pack = 0
                         self.spawn_timer = 0.0
-            else:
-                if self.spawn_timer >= 1.0:
-                    self.wave += 1
-                    self.pack = 0
-                    self.spawn_timer = 0.0
+
+
+        if self.wave >= len(self.wave_lists):
+            self.waves = - 1
+            self.wave = len(self.wave_lists) - 1
+        self.wave_label.text = f"Wave {self.wave + 1}/{len(self.wave_lists)}"
 
         self.enemies.update(delta_time)
         self.towers.update(delta_time)
@@ -292,7 +429,10 @@ class GameBase(arcade.View):
                 i.remove_from_sprite_lists()
 
         if self.base_hp <= 0:
-            self.window.show_view(MenuView())
+            self.window.show_view(EndView(self.name, (self.kills, self.mobs), 'Lose'))
+
+        if len(self.enemies) == 0 and self.waves == -1:
+            self.window.show_view(EndView(self.name, (self.kills, self.mobs), 'Win'))
 
         for tower in self.towers:
             tower.update_tower(delta_time, self.enemies, self.projectiles)
@@ -303,6 +443,8 @@ class GameBase(arcade.View):
                 enemy = projectile.enemy
                 enemy.hp -= projectile.damage
                 if enemy.hp <= 0:
+                    self.money += enemy.money
+                    self.kills += 1
                     enemy.remove_from_sprite_lists()
                 projectile.remove_from_sprite_lists()
 
@@ -328,11 +470,23 @@ class GameBase(arcade.View):
 
 
 class Level1View(GameBase):
+    path = [(64 * 2.5, 500 * 1.8 - 50), (736 * 2.5, 500 * 1.8 - 50), (64 * 2.5, 128 * 1.8 - 50),
+            (736 * 2.5, 128 * 1.8 - 50)]
+    build_place = [(200 * 2.5, 450 * 1.8 - 50), (350 * 2.5, 450 * 1.8 - 50), (500 * 2.5, 450 * 1.8 - 50),
+                   (700 * 2.5, 200 * 1.8 - 50)]
+    background_path = "imgs/травазаготовка.png"
+    # каждый список внутри списка - мобы волны
+    wave_lists = [[(1, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)], [(3, Enemy)]]
+    name = 'Level1'
+
+
+class Level2View(GameBase):
     path = [(64 * 2.5, 500 * 1.8), (736 * 2.5, 500 * 1.8), (64 * 2.5, 128 * 1.8), (736 * 2.5, 128 * 1.8)]
     build_place = [(200 * 2.5, 450 * 1.8), (350 * 2.5, 450 * 1.8), (500 * 2.5, 450 * 1.8), (700 * 2.5, 200 * 1.8)]
     background_path = "imgs/травазаготовка.png"
     # каждый список внутри списка - мобы волны
-    wave_lists = [[(1, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)], [(3, Enemy)]]
+    wave_lists = [[(1, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)], [(3, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)]]
+    name = 'Level2'
 
 
 class BuildTowerPlace(arcade.Sprite):
@@ -379,7 +533,6 @@ class AppleTower(arcade.Sprite):
         return ans
 
 
-
 class Projectile(arcade.Sprite):
     def __init__(self, start_x, start_y, enemy, speed=800, damage=10):
         super().__init__()
@@ -424,17 +577,14 @@ class Projectile(arcade.Sprite):
         self.center_y += self.change_y * delta_time
 
 
-screen_info = arcade.get_screens()
-primary_screen = screen_info[0]
-
 window = arcade.Window(
-    width=primary_screen.width,
-    height=primary_screen.height,
+    width=WIDHT,
+    height=HEIGHT,
     title="Tower Defense",
     fullscreen=False,
     resizable=False,
     style=arcade.Window.WINDOW_STYLE_BORDERLESS
 )
-menu_view = MenuView()
+menu_view = EndView('Lvl1', (42, 52), 'Win')
 window.show_view(menu_view)
 arcade.run()
