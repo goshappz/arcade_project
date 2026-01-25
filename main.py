@@ -3,6 +3,7 @@ from arcade.gui import UIManager, UIFlatButton, UITextureButton, UILabel, UIInpu
     UIMessageBox
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 from pyglet.graphics import Batch
+from arcade.particles import FadeParticle, Emitter, EmitBurst, EmitInterval, EmitMaintainCount
 import math
 import random
 
@@ -200,10 +201,16 @@ class LevelSelectionView(arcade.View):
 
 class Enemy(arcade.Sprite):
     def __init__(self, path_points, speed=100, hp=100, scale=0.05,
-                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png', money=4):
+                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png', money=4, SPARK_TEX=[
+        arcade.make_soft_circle_texture(6, (60, 179, 113)),
+        arcade.make_soft_circle_texture(6, (0, 100, 0)),
+        arcade.make_soft_circle_texture(6, (128, 128, 0)),
+        arcade.make_soft_circle_texture(6, (0, 128, 0)),
+        arcade.make_soft_circle_texture(6, (173, 255, 47))
+        ]):
 
         super().__init__(img, scale=scale)
-
+        self.SPARK_TEX = SPARK_TEX
         self.hp = hp
         self.path = path_points
         self.speed = round(speed * random.randint(100, 125) / 100)
@@ -241,16 +248,26 @@ class Enemy(arcade.Sprite):
 
 class Blue_Enemy(Enemy):
     def __init__(self, path_points, speed=100, hp=150, scale=1,
-                 img='imgs/горшок.png', money=8):
+                 img='imgs/горшок.png', money=8, SPARK_TEX=[
+        arcade.make_soft_circle_texture(6, (0, 0, 139)),
+        arcade.make_soft_circle_texture(6, (70, 130, 180)),
+        arcade.make_soft_circle_texture(6, (0, 191, 255)),
+        arcade.make_soft_circle_texture(6, (65, 105, 225)),
+        ]):
         super().__init__(path_points, speed, hp, scale,
-                         img, money)
+                         img, money, SPARK_TEX)
 
 
 class Red_Enemy(Enemy):
     def __init__(self, path_points, speed=125, hp=100, scale=1,
-                 img='imgs/яблонявгоршке.png', money=8):
+                 img='imgs/яблонявгоршке.png', money=8, SPARK_TEX=[
+        arcade.make_soft_circle_texture(6, (139, 0, 0)),
+        arcade.make_soft_circle_texture(6, (220, 20, 60)),
+        arcade.make_soft_circle_texture(6, (205, 92, 92)),
+        arcade.make_soft_circle_texture(6, (255, 140, 0)),
+        ]):
         super().__init__(path_points, speed, hp, scale,
-                         img, money)
+                         img, money, SPARK_TEX)
 
 
 class GameBase(arcade.View):
@@ -277,6 +294,8 @@ class GameBase(arcade.View):
             for x in i:
                 self.mobs += x[0]
         self.waves = len(self.wave_lists)
+
+        self.emitters = []
 
         self.popup_anchor = None
         self.selected_spot = None
@@ -387,6 +406,26 @@ class GameBase(arcade.View):
             self.money -= cost
             self.close_tower_menu(spot)
 
+    def gravity_drag(self, p):  # Для искр: чуть вниз и затухание скорости
+        p.change_y += -0.03
+        p.change_x *= 0.92
+        p.change_y *= 0.9
+
+    def make_explosion(self, x, y, SPARK_TEX, count=100):
+        # Разовый взрыв с искрами во все стороны
+        return Emitter(
+            center_xy=(x, y),
+            emit_controller=EmitBurst(count),
+            particle_factory=lambda e: FadeParticle(
+                filename_or_texture=random.choice(SPARK_TEX),
+                change_xy=arcade.math.rand_in_circle((0.0, 0.0), 9.0),
+                lifetime=random.uniform(0.5, 0.9),
+                start_alpha=255, end_alpha=0,
+                scale=random.uniform(0.35, 0.9),
+                mutation_callback=self.gravity_drag,
+            ),
+        )
+
     def on_update(self, delta_time):
         self.spawn_timer += delta_time
 
@@ -442,11 +481,19 @@ class GameBase(arcade.View):
                 enemy = projectile.enemy
                 enemy.hp -= projectile.damage
                 if enemy.hp <= 0:
+                    self.emitters.append(self.make_explosion(enemy.center_x, enemy.center_y, enemy.SPARK_TEX))
                     self.money += enemy.money
                     if enemy in self.enemies:
                         self.kills += 1
                     enemy.remove_from_sprite_lists()
                 projectile.remove_from_sprite_lists()
+
+        emitters_copy = self.emitters.copy()  # Защищаемся от мутаций списка
+        for e in emitters_copy:
+            e.update(delta_time)
+        for e in emitters_copy:
+            if e.can_reap():  # Готов к уборке?
+                self.emitters.remove(e)
 
     def on_draw(self):
         self.clear()
@@ -460,6 +507,9 @@ class GameBase(arcade.View):
         self.towers.draw()
         self.enemies.draw()
         self.projectiles.draw()
+
+        for e in self.emitters:
+            e.draw()
 
         for x, y in self.path:
             arcade.draw_circle_filled(x, y, 2, arcade.color.ORANGE)
