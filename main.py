@@ -34,19 +34,22 @@ class MenuView(arcade.View):
         self.manager.add(self.anchor_layout)  # Всё в manager
 
     def setup_widgets(self):
-        label = UILabel(text="Текст",
+        label = UILabel(text="Slime defence",
                         font_size=20,
                         text_color=arcade.color.WHITE,
                         width=300,
                         multiline=True,
                         align="center")
         self.box_layout.add(label)
-        flat_button = UIFlatButton(text="Играть", width=200, height=50, color=arcade.color.BLUE)
-        flat_button.on_click = self.play_game
-        self.box_layout.add(flat_button)
-        flat_button2 = UIFlatButton(text="Выход", width=200, height=50, color=arcade.color.RED)
-        flat_button2.on_click = self.exit_game
-        self.box_layout.add(flat_button2)
+        play_button = UIFlatButton(text="Играть", width=200, height=50, color=arcade.color.BLUE)
+        play_button.on_click = self.play_game
+        self.box_layout.add(play_button)
+        sts_button = UIFlatButton(text="Статистика", width=200, height=50, color=arcade.color.BLUE)
+        sts_button.on_click = self.sts_screen
+        self.box_layout.add(sts_button)
+        ext_button2 = UIFlatButton(text="Выход", width=200, height=50, color=arcade.color.RED)
+        ext_button2.on_click = self.exit_game
+        self.box_layout.add(ext_button2)
 
     def on_draw(self):
         self.clear()
@@ -55,6 +58,10 @@ class MenuView(arcade.View):
     def play_game(self, event):
         level_selecton = LevelSelectionView()
         self.window.show_view(level_selecton)
+
+    def sts_screen(self, event):
+        sts_screen = StsView()
+        self.window.show_view(sts_screen)
 
     def exit_game(self, event):
         arcade.exit()
@@ -66,6 +73,73 @@ class MenuView(arcade.View):
     def on_hide_view(self):
         self.manager.disable()
 
+class StsView(arcade.View):
+    def __init__(self):
+        super().__init__()
+        f = open("sts.txt", "r", encoding="utf-8")
+        self.vr = []
+        for i in f:
+            if '\n' in i:
+                self.vr.append(i)
+            else:
+                self.vr.append(i + '\n')
+        f.close()
+        self.vr = ''.join(self.vr)
+        arcade.set_background_color((64, 224, 208))
+        self.manager = UIManager()
+        self.manager.enable()
+        self.setup_widgets()
+
+
+    def setup_widgets(self):
+        label_ttl = UILabel(text='Статистика',
+                            font_size=90,
+                            text_color=(123, 104, 238),
+                            width=300,
+                            multiline=True,
+                            align="center")
+        label_ttl.center_x = WIDHT // 2 - 130
+        label_ttl.center_y = round(((1080 - 350) / 1080) * HEIGHT + 150)
+
+        label_res = UILabel(text=self.vr,
+                            font_size=38,
+                            text_color=(255, 215, 0),
+                            width=400,
+                            multiline=True,
+                            align="center")
+        label_res.center_x = WIDHT // 2
+        label_res.center_y = round(((1080 - 350) / 1080) * HEIGHT - 225)
+
+        button_ext = UIFlatButton(text='В меню', width=200, height=50, color=arcade.color.BLUE)
+        button_ext.on_click = self.ext
+        button_ext.center_x = WIDHT // 2
+        button_ext.center_y = round(((1080 - 900) / 1080) * HEIGHT)
+
+        self.manager.add(button_ext)
+        self.manager.add(label_res)
+        self.manager.add(label_ttl)
+
+    def ext(self, event):
+        main_screen = MenuView()
+        self.window.show_view(main_screen)
+
+    def on_draw(self):
+        self.clear()
+        arcade.draw_lbwh_rectangle_filled(610,
+                                          300,
+                                          700,
+                                          450,
+                                          (13, 33, 79))
+        self.manager.draw()
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        pass
+
+    def on_show_view(self):
+        self.manager.enable()
+
+    def on_hide_view(self):
+        self.manager.disable()
 
 class EndView(arcade.View):
     def __init__(self, name, stats, res):
@@ -85,6 +159,26 @@ class EndView(arcade.View):
         self.manager = UIManager()
         self.manager.enable()
         self.setup_widgets()
+        self.sts_chng()
+
+    def sts_chng(self):
+        f = open("sts.txt", "r", encoding="utf-8")
+        vr = []
+        for i in f:
+            if '\n' in i:
+                vr.append(i[:-1])
+            else:
+                vr.append(i)
+        f.close()
+        f = open("sts.txt", "w", encoding="utf-8")
+        f.write(vr[0][:vr[0].find('- ') + 2] + str(int(vr[0][vr[0].find('- ') + 2:]) + self.stats[0]) + '\n')
+        if self.res == 'Win':
+            f.write(vr[1][:vr[1].find('- ') + 2] + str(int(vr[1][vr[1].find('- ') + 2:]) + 1) + '\n')
+            f.write(vr[2][:vr[2].find('- ') + 2] + str(int(vr[2][vr[2].find('- ') + 2:]) + 0) + '\n')
+        else:
+            f.write(vr[1][:vr[1].find('- ') + 2] + str(int(vr[1][vr[1].find('- ') + 2:]) + 0) + '\n')
+            f.write(vr[2][:vr[2].find('- ') + 2] + str(int(vr[2][vr[2].find('- ') + 2:]) + 1) + '\n')
+        f.close()
 
     def setup_widgets(self):
         label_res = UILabel(text=self.res,
