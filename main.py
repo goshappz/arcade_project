@@ -436,17 +436,17 @@ class GameBase(arcade.View):
             if self.wave <= self.waves - 1:
                 if self.pack <= len(self.wave_lists[self.wave]) - 1:
                     if self.spawned < self.wave_lists[self.wave][self.pack][0]:
-                        if self.spawn_timer >= 0.5:
+                        if self.spawn_timer >= 0.4:
                             self.spawn_enemy(self.wave_lists[self.wave][self.pack][1])
                             self.spawned += 1
                             self.spawn_timer = 0.0
                     else:
-                        if self.spawn_timer >= 1:
+                        if self.spawn_timer >= 0.7:
                             self.pack += 1
                             self.spawned = 0
                             self.spawn_timer = 0.0
                 else:
-                    if self.spawn_timer >= 3.0:
+                    if self.spawn_timer >= 2.5:
                         self.wave += 1
                         self.pack = 0
                         self.spawn_timer = 0.0
@@ -481,9 +481,9 @@ class GameBase(arcade.View):
                 enemy = projectile.enemy
                 enemy.hp -= projectile.damage
                 if enemy.hp <= 0:
-                    self.emitters.append(self.make_explosion(enemy.center_x, enemy.center_y, enemy.SPARK_TEX))
                     self.money += enemy.money
                     if enemy in self.enemies:
+                        self.emitters.append(self.make_explosion(enemy.center_x, enemy.center_y, enemy.SPARK_TEX))
                         self.kills += 1
                     enemy.remove_from_sprite_lists()
                 projectile.remove_from_sprite_lists()
@@ -522,20 +522,29 @@ class GameBase(arcade.View):
 class Level1View(GameBase):
     path = [(64 * 2.5, 500 * 1.8 - 50), (736 * 2.5, 500 * 1.8 - 50), (64 * 2.5, 128 * 1.8 - 50),
             (736 * 2.5, 128 * 1.8 - 50)]
-    build_place = [(200 * 2.5, 450 * 1.8 - 50), (350 * 2.5, 450 * 1.8 - 50), (500 * 2.5, 450 * 1.8 - 50),
-                   (700 * 2.5, 200 * 1.8 - 50)]
+    build_place = [(200 * 2.5 + 50, 450 * 1.8 - 75), (350 * 2.5 + 50, 450 * 1.8 - 75),
+    (500 * 2.5 + 50, 450 * 1.8 - 75), (200 * 2.5 + 50, 450 * 1.8 - 550),
+    (350 * 2.5 + 50, 450 * 1.8 - 550), (500 * 2.5 + 50, 450 * 1.8 - 550)]
     background_path = "imgs/травазаготовка.png"
     # каждый список внутри списка - мобы волны
-    wave_lists = [[(1, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)], [(3, Enemy)]]
+    wave_lists = [[(1, Enemy)], [(3, Enemy), (2, Enemy)], [(2, Blue_Enemy), (2, Red_Enemy), (3, Enemy)],
+            [(2, Blue_Enemy), (2, Red_Enemy), (3, Enemy), (3, Blue_Enemy)],
+                  [(4, Blue_Enemy), (4, Red_Enemy), (1, Enemy)]]
     name = 'Level1'
 
 
 class Level2View(GameBase):
-    path = [(64 * 2.5, 500 * 1.8), (736 * 2.5, 500 * 1.8), (64 * 2.5, 128 * 1.8), (736 * 2.5, 128 * 1.8)]
-    build_place = [(200 * 2.5, 450 * 1.8), (350 * 2.5, 450 * 1.8), (500 * 2.5, 450 * 1.8), (700 * 2.5, 200 * 1.8)]
+    path = [(200, 200), (200, 850), (900, 850), (900, 200), (1450, 200), (1450, 500), (1800, 500)]
+    build_place = [(300, 500), (550, 750), (800, 500), (1175, 300), (1625, 400)]
     background_path = "imgs/травазаготовка.png"
     # каждый список внутри списка - мобы волны
-    wave_lists = [[(1, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)], [(3, Enemy)], [(4, Blue_Enemy), (2, Red_Enemy)]]
+    wave_lists = [[(1 * 2, Enemy)], [(3 * 2, Enemy), (2 * 2, Enemy)],
+        [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy)],
+        [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy), (3 * 2, Blue_Enemy)],
+        [(4 * 2, Blue_Enemy), (4 * 2, Red_Enemy), (1 * 2, Enemy)],
+        [(2 * 3, Blue_Enemy), (2 * 3, Red_Enemy), (3 * 3, Enemy), (3 * 3, Blue_Enemy)],
+        [(4 * 3, Blue_Enemy), (4 * 3, Red_Enemy), (1 * 3, Enemy)]
+                  ]
     name = 'Level2'
 
 
@@ -553,11 +562,11 @@ class AppleTower(arcade.Sprite):
         self.center_x = x
         self.center_y = y
 
-        self.range = 300
+        self.range = 350
         self.fire_rate = 0.6
         self.cooldown = 0.0
         self.damage = 100
-        self.projectile_speed = 600
+        self.projectile_speed = 900
 
     def update_tower(self, delta_time, enemies, projectiles):
         self.cooldown -= delta_time
