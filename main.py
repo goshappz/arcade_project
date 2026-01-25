@@ -357,14 +357,55 @@ class GameBase(arcade.View):
             return
         if button != arcade.MOUSE_BUTTON_LEFT:
             return
-        hits = arcade.get_sprites_at_point((x, y), self.build_slots)
+        hits_spot = arcade.get_sprites_at_point((x, y), self.build_slots)
+        hits_towers = arcade.get_sprites_at_point((x, y), self.towers)
 
-        if not hits:
+        if not hits_spot and not hits_towers:
             return
-        spot = hits[0]
-        if spot.taken:
+        elif hits_spot and not hits_towers:
+            spot = hits_spot[0]
+            if spot.taken:
+                return
+            else:
+                self.open_tower_menu(spot)
+        elif hits_towers and not hits_spot:
+            tower = hits_towers[0]
+            if tower.fire_rate + 0.1 <= 1:
+                self.tower_upg_menu(tower)
+            else:
+                return
+
+
+    def tower_upg_menu(self, tower):
+        self.open = True
+
+        self.button2 = UIFlatButton(text=f'Улучшение {tower.upg_cost}', width=220, height=40)
+        self.button2.center_x = tower.center_x
+        self.button2.center_y = tower.center_y + 40
+        self.button2.on_click = lambda upg: self.upg_tower(tower)
+
+        self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40)
+        self.leave_menu_button.center_x = tower.center_x
+        self.leave_menu_button.center_y = tower.center_y - 100
+        self.leave_menu_button.on_click = lambda leave: self.close_tower_menu(tower)
+
+        self.ui.add(self.button2)
+        self.ui.add(self.leave_menu_button)
+
+    def upg_tower(self, tower):
+        cost = tower.upg_cost
+        if self.money < cost:
             return
-        self.open_tower_menu(spot)
+        tower.lvl += 1
+        tower.upg_cost += 10
+        tower.fire_rate += 0.1
+        self.money -= cost
+        self.close_tower_menu(tower)
+
+    def close_tower_menu(self, tower):
+        self.ui.remove(self.button2)
+        self.ui.remove(self.leave_menu_button)
+        self.open = False
 
     def open_tower_menu(self, spot):
         self.open = True
@@ -379,12 +420,12 @@ class GameBase(arcade.View):
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40)
         self.leave_menu_button.center_x = spot.center_x
         self.leave_menu_button.center_y = spot.center_y - 50
-        self.leave_menu_button.on_click = lambda leave: self.close_tower_menu(spot)
+        self.leave_menu_button.on_click = lambda leave: self.close_spot_menu(spot)
 
         self.ui.add(self.button1)
         self.ui.add(self.leave_menu_button)
 
-    def close_tower_menu(self, spot):
+    def close_spot_menu(self, spot):
         self.ui.remove(self.button1)
         self.ui.remove(self.leave_menu_button)
         spot.color = arcade.color.GRAY
@@ -401,10 +442,10 @@ class GameBase(arcade.View):
             self.towers.append(tower)
 
             self.build_slots.remove(spot)
-            spot.taken = True
+            spot.taken = tower_type
             spot.color = arcade.color.DARK_GRAY
             self.money -= cost
-            self.close_tower_menu(spot)
+            self.close_spot_menu(spot)
 
     def gravity_drag(self, p):  # Для искр: чуть вниз и затухание скорости
         p.change_y += -0.03
@@ -562,11 +603,13 @@ class AppleTower(arcade.Sprite):
         self.center_x = x
         self.center_y = y
 
+        self.lvl = 0
+        self.upg_cost = 60
         self.range = 350
-        self.fire_rate = 0.6
+        self.fire_rate = 0.5
         self.cooldown = 0.0
         self.damage = 100
-        self.projectile_speed = 900
+        self.projectile_speed = 450
 
     def update_tower(self, delta_time, enemies, projectiles):
         self.cooldown -= delta_time
@@ -576,7 +619,7 @@ class AppleTower(arcade.Sprite):
         if not target:
             return
 
-        projectile = Projectile(self.center_x, self.center_y, target, speed=300, damage=self.damage)
+        projectile = Projectile(self.center_x, self.center_y, target, speed=self.projectile_speed, damage=self.damage)
         projectiles.append(projectile)
         self.cooldown = 1.0 / self.fire_rate
 
