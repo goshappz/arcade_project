@@ -7,12 +7,12 @@ from arcade.particles import FadeParticle, Emitter, EmitBurst, EmitInterval, Emi
 import math
 import random
 
+arcade.load_font("font/Pharmakon.otf")
 tower_types = {"apple": 50}
 screen_info = arcade.get_screens()
 primary_screen = screen_info[0]
 WIDHT = primary_screen.width
 HEIGHT = primary_screen.height
-
 
 class MenuView(arcade.View):
     def __init__(self):
@@ -35,19 +35,20 @@ class MenuView(arcade.View):
 
     def setup_widgets(self):
         label = UILabel(text="Slime defence",
-                        font_size=20,
+                        font_size=40,
                         text_color=arcade.color.WHITE,
                         width=300,
                         multiline=True,
-                        align="center")
+                        align="center",
+                        font_name="Pharmakon",)
         self.box_layout.add(label)
-        play_button = UIFlatButton(text="Играть", width=200, height=50, color=arcade.color.BLUE)
+        play_button = UIFlatButton(text="Играть", width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         play_button.on_click = self.play_game
         self.box_layout.add(play_button)
-        sts_button = UIFlatButton(text="Статистика", width=200, height=50, color=arcade.color.BLUE)
+        sts_button = UIFlatButton(text="Статистика", width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         sts_button.on_click = self.sts_screen
         self.box_layout.add(sts_button)
-        ext_button2 = UIFlatButton(text="Выход", width=200, height=50, color=arcade.color.RED)
+        ext_button2 = UIFlatButton(text="Выход", width=200, height=50, color=arcade.color.RED, font_name="Pharmakon")
         ext_button2.on_click = self.exit_game
         self.box_layout.add(ext_button2)
 
@@ -97,7 +98,8 @@ class StsView(arcade.View):
                             text_color=(123, 104, 238),
                             width=300,
                             multiline=True,
-                            align="center")
+                            align="center",
+                            font_name="Pharmakon")
         label_ttl.center_x = WIDHT // 2 - 130
         label_ttl.center_y = round(((1080 - 350) / 1080) * HEIGHT + 150)
 
@@ -106,11 +108,12 @@ class StsView(arcade.View):
                             text_color=(255, 215, 0),
                             width=400,
                             multiline=True,
-                            align="center")
+                            align="center",
+                            font_name="Pharmakon")
         label_res.center_x = WIDHT // 2
         label_res.center_y = round(((1080 - 350) / 1080) * HEIGHT - 225)
 
-        button_ext = UIFlatButton(text='В меню', width=200, height=50, color=arcade.color.BLUE)
+        button_ext = UIFlatButton(text='В меню', width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         button_ext.on_click = self.ext
         button_ext.center_x = WIDHT // 2
         button_ext.center_y = round(((1080 - 900) / 1080) * HEIGHT)
@@ -186,7 +189,8 @@ class EndView(arcade.View):
                             text_color=self.rescol,
                             width=300,
                             multiline=True,
-                            align="center")
+                            align="center",
+                            font_name="Pharmakon")
         label_res.center_x = WIDHT // 2
         label_res.center_y = round(((1080 - 350) / 1080) * HEIGHT)
 
@@ -195,7 +199,8 @@ class EndView(arcade.View):
                             text_color=(255, 215, 0),
                             width=400,
                             multiline=True,
-                            align="center")
+                            align="center",
+                            font_name="Pharmakon")
         label_sts.center_x = WIDHT // 2
         label_sts.center_y = round(((1080 - 700) / 1080) * HEIGHT)
 
@@ -204,11 +209,12 @@ class EndView(arcade.View):
                              text_color=self.namecol,
                              width=300,
                              multiline=True,
-                             align="center")
+                             align="center",
+                             font_name="Pharmakon")
         label_name.center_x = WIDHT // 2
         label_name.center_y = round(((1080 - 250) / 1080) * HEIGHT)
 
-        button_ext = UIFlatButton(text='В меню', width=200, height=50, color=arcade.color.BLUE)
+        button_ext = UIFlatButton(text='В меню', width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         button_ext.on_click = self.ext
         button_ext.center_x = WIDHT // 2
         button_ext.center_y = round(((1080 - 900) / 1080) * HEIGHT)
@@ -252,11 +258,12 @@ class LevelSelectionView(arcade.View):
                         text_color=arcade.color.BLUE,
                         width=300,
                         multiline=True,
-                        align="center")
+                        align="center",
+                        font_name="Pharmakon")
         label.center_x = 400
         label.center_y = 300
 
-        button_level_1 = UIFlatButton(text='Первый уровень', width=200, height=50, color=arcade.color.BLUE)
+        button_level_1 = UIFlatButton(text='Первый уровень', width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         button_level_1.on_click = self.play_level_1
         button_level_1.center_x = 100
         button_level_1.center_y = 100
@@ -264,7 +271,7 @@ class LevelSelectionView(arcade.View):
         self.manager.add(label)
         self.manager.add(button_level_1)
 
-        button_level_2 = UIFlatButton(text='Второй уровень', width=200, height=50, color=arcade.color.BLUE)
+        button_level_2 = UIFlatButton(text='Второй уровень', width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         button_level_2.on_click = self.play_level_2
 
         self.manager.add(label)
@@ -294,14 +301,14 @@ class LevelSelectionView(arcade.View):
 
 
 class Enemy(arcade.Sprite):
-    def __init__(self, path_points, speed=100, hp=100, scale=0.05,
-                 img='imgs/ooze-monster-clip-art-slime-814deb4f1a447995e26ae0b10b344fe6.png', money=4, SPARK_TEX=[
-        arcade.make_soft_circle_texture(6, (60, 179, 113)),
-        arcade.make_soft_circle_texture(6, (0, 100, 0)),
-        arcade.make_soft_circle_texture(6, (128, 128, 0)),
-        arcade.make_soft_circle_texture(6, (0, 128, 0)),
-        arcade.make_soft_circle_texture(6, (173, 255, 47))
-        ]):
+    def __init__(self, path_points, speed=100, hp=100, scale=2,
+                 img='imgs/слизень_обычный.png', money=4, SPARK_TEX=[
+                arcade.make_soft_circle_texture(6, (60, 179, 113)),
+                arcade.make_soft_circle_texture(6, (0, 100, 0)),
+                arcade.make_soft_circle_texture(6, (128, 128, 0)),
+                arcade.make_soft_circle_texture(6, (0, 128, 0)),
+                arcade.make_soft_circle_texture(6, (173, 255, 47))
+            ]):
 
         super().__init__(img, scale=scale)
         self.SPARK_TEX = SPARK_TEX
@@ -341,27 +348,27 @@ class Enemy(arcade.Sprite):
 
 
 class Blue_Enemy(Enemy):
-    def __init__(self, path_points, speed=100, hp=150, scale=1,
-                 img='imgs/горшок.png', money=8, SPARK_TEX=[
-        arcade.make_soft_circle_texture(6, (0, 0, 139)),
-        arcade.make_soft_circle_texture(6, (70, 130, 180)),
-        arcade.make_soft_circle_texture(6, (0, 191, 255)),
-        arcade.make_soft_circle_texture(6, (65, 105, 225)),
-        ]):
+    def __init__(self, path_points, speed=100, hp=150, scale=2,
+                 img='imgs/слизень_синий.png', money=8, SPARK_TEX=[
+                arcade.make_soft_circle_texture(6, (0, 0, 139)),
+                arcade.make_soft_circle_texture(6, (70, 130, 180)),
+                arcade.make_soft_circle_texture(6, (0, 191, 255)),
+                arcade.make_soft_circle_texture(6, (65, 105, 225)),
+            ]):
         super().__init__(path_points, speed, hp, scale,
                          img, money, SPARK_TEX)
 
 
 class Red_Enemy(Enemy):
-    def __init__(self, path_points, speed=125, hp=100, scale=1,
-                 img='imgs/яблонявгоршке.png', money=8, SPARK_TEX=[
-        arcade.make_soft_circle_texture(6, (139, 0, 0)),
-        arcade.make_soft_circle_texture(6, (220, 20, 60)),
-        arcade.make_soft_circle_texture(6, (205, 92, 92)),
-        arcade.make_soft_circle_texture(6, (255, 140, 0)),
-        ]):
+    def __init__(self, path_points, speed=125, hp=100, scale=2,
+                 img='imgs/слизень_красный.png', money=8, SPARK_TEX=[
+                arcade.make_soft_circle_texture(6, (139, 0, 0)),
+                arcade.make_soft_circle_texture(6, (220, 20, 60)),
+                arcade.make_soft_circle_texture(6, (205, 92, 92)),
+                arcade.make_soft_circle_texture(6, (255, 140, 0)),
+            ]):
         super().__init__(path_points, speed, hp, scale,
-                         img, money, SPARK_TEX)
+                         img, money)
 
 
 class GameBase(arcade.View):
@@ -369,7 +376,13 @@ class GameBase(arcade.View):
     path = None
     build_place = list()
     wave_lists = list()
+    building_towers = {}
     name = str()
+    apple_tree_textures = [
+        arcade.load_texture("imgs/яблонявгоршке.png"),
+        arcade.load_texture("imgs/яблоня_средняя.png"),
+        arcade.load_texture("imgs/яблонявзрослая.png"),
+    ]
 
     def __init__(self):
         super().__init__()
@@ -378,6 +391,7 @@ class GameBase(arcade.View):
         self.build_slots = arcade.SpriteList()
         self.towers = arcade.SpriteList()
         self.projectiles = arcade.SpriteList()
+        self.road_sprites = arcade.SpriteList()
         self.money = 90
         self.spawn_timer = 0.0
         self.base_hp = 3
@@ -409,11 +423,12 @@ class GameBase(arcade.View):
                                   text_color=(0, 100, 0),
                                   width=300,
                                   multiline=True,
-                                  align="center")
+                                  align="center",
+                                  font_name="Pharmakon")
         self.wave_label.center_x = 1920 / 2
         self.wave_label.center_y = 1080 - 100
 
-        button_ext = UIFlatButton(text='Выйти', width=150, height=50, color=arcade.color.BLUE)
+        button_ext = UIFlatButton(text='Выйти', width=150, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         button_ext.on_click = self.close_game
         button_ext.center_x = 100
         button_ext.center_y = HEIGHT - 50
@@ -430,6 +445,8 @@ class GameBase(arcade.View):
         self.build_slots = arcade.SpriteList()
         self.towers = arcade.SpriteList()
         self.projectiles.draw()
+        self.road_sprites = arcade.SpriteList()
+        self.build_road(self.path, "imgs/дорога1.png", scale=1.0, step_px=48)
 
         for x, y in self.build_place:
             self.build_slots.append(BuildTowerPlace(x, y))
@@ -445,6 +462,24 @@ class GameBase(arcade.View):
 
     def spawn_enemy(self, enemy):
         self.enemies.append(enemy(self.path))
+
+    def build_road(self, path, texture_path, scale=1.0, step_px=48):
+        road_texture = arcade.load_texture(texture_path)
+        for (x1, y1), (x2, y2) in zip(path, path[1:]):
+            distance = math.dist((x1, y1), (x2, y2))
+            if distance <= 0:
+                continue
+            steps = int(distance // step_px)
+            angle_deg = math.degrees(math.atan2((x2 - x1), (y2 - y1)))
+            for s in range(steps + 1):
+                t = (s * step_px) / distance
+
+                spr = arcade.Sprite(scale=scale)
+                spr.texture = road_texture
+                spr.center_x = x1 + (x2 - x1) * t
+                spr.center_y = y1 + (y2 - y1) * t
+                spr.angle = angle_deg
+                self.road_sprites.append(spr)
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.open:
@@ -469,16 +504,15 @@ class GameBase(arcade.View):
             else:
                 return
 
-
     def tower_upg_menu(self, tower):
         self.open = True
 
-        self.button2 = UIFlatButton(text=f'Улучшение {tower.upg_cost}', width=220, height=40)
+        self.button2 = UIFlatButton(text=f'Улучшение {tower.upg_cost}', width=220, height=40, font_name="Pharmakon")
         self.button2.center_x = tower.center_x
         self.button2.center_y = tower.center_y + 40
         self.button2.on_click = lambda upg: self.upg_tower(tower)
 
-        self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40)
+        self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
         self.leave_menu_button.center_x = tower.center_x
         self.leave_menu_button.center_y = tower.center_y - 100
         self.leave_menu_button.on_click = lambda leave: self.close_tower_menu(tower)
@@ -506,12 +540,12 @@ class GameBase(arcade.View):
         self.selected_spot = spot
         spot.color = arcade.color.GREEN
 
-        self.button1 = UIFlatButton(text=f'Яблоня {tower_types["apple"]}', width=220, height=40)
+        self.button1 = UIFlatButton(text=f'Яблоня {tower_types["apple"]}', width=220, height=40, font_name="Pharmakon")
         self.button1.center_x = spot.center_x
         self.button1.center_y = spot.center_y + 50
         self.button1.on_click = lambda build_apple: self.build_tower("apple")
 
-        self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40)
+        self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
         self.leave_menu_button.center_x = spot.center_x
         self.leave_menu_button.center_y = spot.center_y - 50
         self.leave_menu_button.on_click = lambda leave: self.close_spot_menu(spot)
@@ -533,8 +567,13 @@ class GameBase(arcade.View):
         if tower_type == "apple":
             spot = self.selected_spot
             tower = AppleTower(spot.center_x, spot.center_y + 45)
+            tower.texture = self.apple_tree_textures[0]
             self.towers.append(tower)
-
+            self.building_towers[tower] = {
+                "textures": self.apple_tree_textures,
+                "elapsed": 0.0,
+                "frame_time": 0.15,  # сек на кадр
+            }
             self.build_slots.remove(spot)
             spot.taken = tower_type
             spot.color = arcade.color.DARK_GRAY
@@ -586,7 +625,6 @@ class GameBase(arcade.View):
                         self.pack = 0
                         self.spawn_timer = 0.0
 
-
         if self.wave >= len(self.wave_lists):
             self.waves = - 1
             self.wave = len(self.wave_lists) - 1
@@ -629,18 +667,30 @@ class GameBase(arcade.View):
         for e in emitters_copy:
             if e.can_reap():  # Готов к уборке?
                 self.emitters.remove(e)
+        finished = []
+        for tower, anim in self.building_towers.items():
+            anim["elapsed"] += delta_time
+            frame = int(anim["elapsed"] / anim["frame_time"])
 
+            if frame >= len(anim["textures"]):
+                tower.texture = anim["textures"][-1]
+                finished.append(tower)
+            else:
+                tower.texture = anim["textures"][frame]
+
+        for tower in finished:
+            del self.building_towers[tower]
     def on_draw(self):
         self.clear()
         texture_rectangle = arcade.XYWH(self.window.width // 2, self.window.height // 2, self.window.width,
                                         self.window.height)
         arcade.draw_texture_rect(self.background_texture, texture_rectangle)
         arcade.draw_line_strip(self.path, arcade.color.GREEN, 10)
-        arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.WHITE, 24)
-
+        arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.BLACK, 24, font_name="Pharmakon")
+        self.road_sprites.draw()
         self.build_slots.draw()
-        self.towers.draw()
         self.enemies.draw()
+        self.towers.draw()
         self.projectiles.draw()
 
         for e in self.emitters:
@@ -650,7 +700,7 @@ class GameBase(arcade.View):
             arcade.draw_circle_filled(x, y, 2, arcade.color.ORANGE)
 
         self.enemies.draw()
-        arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 24)
+        arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 24, font_name="Pharmakon")
         self.ui.draw()
 
 
@@ -658,12 +708,12 @@ class Level1View(GameBase):
     path = [(64 * 2.5, 500 * 1.8 - 50), (736 * 2.5, 500 * 1.8 - 50), (64 * 2.5, 128 * 1.8 - 50),
             (736 * 2.5, 128 * 1.8 - 50)]
     build_place = [(200 * 2.5 + 50, 450 * 1.8 - 75), (350 * 2.5 + 50, 450 * 1.8 - 75),
-    (500 * 2.5 + 50, 450 * 1.8 - 75), (200 * 2.5 + 50, 450 * 1.8 - 550),
-    (350 * 2.5 + 50, 450 * 1.8 - 550), (500 * 2.5 + 50, 450 * 1.8 - 550)]
-    background_path = "imgs/травазаготовка.png"
+                   (500 * 2.5 + 50, 450 * 1.8 - 75), (200 * 2.5 + 50, 450 * 1.8 - 550),
+                   (350 * 2.5 + 50, 450 * 1.8 - 550), (500 * 2.5 + 50, 450 * 1.8 - 550)]
+    background_path = "imgs/задний фон.png"
     # каждый список внутри списка - мобы волны
     wave_lists = [[(1, Enemy)], [(3, Enemy), (2, Enemy)], [(2, Blue_Enemy), (2, Red_Enemy), (3, Enemy)],
-            [(2, Blue_Enemy), (2, Red_Enemy), (3, Enemy), (3, Blue_Enemy)],
+                  [(2, Blue_Enemy), (2, Red_Enemy), (3, Enemy), (3, Blue_Enemy)],
                   [(4, Blue_Enemy), (4, Red_Enemy), (1, Enemy)]]
     name = 'Level1'
 
@@ -671,14 +721,14 @@ class Level1View(GameBase):
 class Level2View(GameBase):
     path = [(200, 200), (200, 850), (900, 850), (900, 200), (1450, 200), (1450, 500), (1800, 500)]
     build_place = [(300, 500), (550, 750), (800, 500), (1175, 300), (1625, 400)]
-    background_path = "imgs/травазаготовка.png"
+    background_path = "imgs/задний фон.png"
     # каждый список внутри списка - мобы волны
     wave_lists = [[(1 * 2, Enemy)], [(3 * 2, Enemy), (2 * 2, Enemy)],
-        [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy)],
-        [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy), (3 * 2, Blue_Enemy)],
-        [(4 * 2, Blue_Enemy), (4 * 2, Red_Enemy), (1 * 2, Enemy)],
-        [(2 * 3, Blue_Enemy), (2 * 3, Red_Enemy), (3 * 3, Enemy), (3 * 3, Blue_Enemy)],
-        [(4 * 3, Blue_Enemy), (4 * 3, Red_Enemy), (1 * 3, Enemy)]
+                  [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy)],
+                  [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy), (3 * 2, Blue_Enemy)],
+                  [(4 * 2, Blue_Enemy), (4 * 2, Red_Enemy), (1 * 2, Enemy)],
+                  [(2 * 3, Blue_Enemy), (2 * 3, Red_Enemy), (3 * 3, Enemy), (3 * 3, Blue_Enemy)],
+                  [(4 * 3, Blue_Enemy), (4 * 3, Red_Enemy), (1 * 3, Enemy)]
                   ]
     name = 'Level2'
 
@@ -692,7 +742,7 @@ class BuildTowerPlace(arcade.Sprite):
 
 
 class AppleTower(arcade.Sprite):
-    def __init__(self, x, y, scale=2.0, img='imgs/яблонявгоршке.png'):
+    def __init__(self, x, y, scale=2.0, img='imgs/яблонявзрослая.png'):
         super().__init__(img, scale=scale)
         self.center_x = x
         self.center_y = y
