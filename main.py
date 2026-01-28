@@ -1,9 +1,11 @@
+
 import arcade
 from arcade.gui import UIManager, UIFlatButton, UITextureButton, UILabel, UIInputText, UITextArea, UISlider, UIDropdown, \
     UIMessageBox
 from arcade.gui.widgets.layout import UIAnchorLayout, UIBoxLayout
 from pyglet.graphics import Batch
 from arcade.particles import FadeParticle, Emitter, EmitBurst, EmitInterval, EmitMaintainCount
+from arcade.camera import Camera2D
 import math
 import random
 
@@ -19,6 +21,7 @@ class MenuView(arcade.View):
         super().__init__()
         arcade.set_background_color(arcade.color.GRAY)
 
+        self.button_sound = arcade.Sound('sounds/button_sound.wav')
         # UIManager — сердце GUI
         self.manager = UIManager()
         self.manager.enable()  # Включить, чтоб виджеты работали
@@ -57,14 +60,17 @@ class MenuView(arcade.View):
         self.manager.draw()  # Рисуй GUI поверх всего
 
     def play_game(self, event):
+        self.button_sound.play()
         level_selecton = LevelSelectionView()
         self.window.show_view(level_selecton)
 
     def sts_screen(self, event):
+        self.button_sound.play()
         sts_screen = StsView()
         self.window.show_view(sts_screen)
 
     def exit_game(self, event):
+        self.button_sound.play()
         arcade.exit()
 
     def on_show_view(self):
@@ -245,6 +251,7 @@ class EndView(arcade.View):
 class LevelSelectionView(arcade.View):
     def __init__(self):
         super().__init__()
+        self.button_sound = arcade.Sound('sounds/button_sound.wav')
         arcade.set_background_color(arcade.color.LIGHT_GRAY)
         self.manager = UIManager()
         self.manager.enable()  # Включить, чтоб виджеты работали
@@ -285,10 +292,12 @@ class LevelSelectionView(arcade.View):
         pass  # Для кликов, но manager сам обрабатывает
 
     def play_level_1(self, event):
+        self.button_sound.play()
         game_view = Level1View()
         self.window.show_view(game_view)
 
     def play_level_2(self, event):
+        self.button_sound.play()
         game_view = Level2View()
         self.window.show_view(game_view)
 
@@ -373,8 +382,10 @@ class Red_Enemy(Enemy):
 
 class GameBase(arcade.View):
     background_path = None
+    background_path1 = None
     path = None
     build_place = list()
+    money_log = {}
     wave_lists = list()
     building_towers = {}
     name = str()
@@ -387,17 +398,38 @@ class GameBase(arcade.View):
     def __init__(self):
         super().__init__()
         self.background_texture = arcade.load_texture(self.background_path)
+        self.background_texture1 = arcade.load_texture(self.background_path1)
         self.enemies = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
         self.towers = arcade.SpriteList()
         self.projectiles = arcade.SpriteList()
         self.road_sprites = arcade.SpriteList()
+
+        self.world_camera = None
+        self.ui_camera = None
+        self.move_left = False
+        self.move_right = False
+        self.move_up = False
+        self.move_down = False
+
+        self.cam_speed = 900
+        self.zoom = 1.0
+        self.zoom_min = 0.5
+        self.zoom_max = 1.0
+        self.world_width = 3840
+        self.world_height = 1080
+
         self.money = 90
         self.spawn_timer = 0.0
         self.base_hp = 3
         self.start = 0
         self.kills = 0
         self.mobs = 0
+
+        self.horn_sound = arcade.Sound('sounds/horn.wav')
+        self.button_sound = arcade.Sound('sounds/button_sound.wav')
+        self.cash = arcade.Sound('sounds/Cash.wav')
+        self.horn_sound.play(volume=0.3)
         for i in self.wave_lists:
             for x in i:
                 self.mobs += x[0]
@@ -412,11 +444,10 @@ class GameBase(arcade.View):
         self.pack = 0
         self.spawned = 0
         self.ui = UIManager()
-        self.ui.enable()  # Включить, чтоб виджеты работали
+        # self.ui.enable()  # Включить, чтоб виджеты работали
 
         # Добавим все виджеты в box, потом box в anchor
         self.setup_widgets()
-
     def setup_widgets(self):
         self.wave_label = UILabel(text=f"Wave {self.wave}/{len(self.wave_lists)}",
                                   font_size=55,
@@ -441,6 +472,9 @@ class GameBase(arcade.View):
         self.enemies = arcade.SpriteList()
         self.spawn_timer = 0.0
 
+        self.world_camera = Camera2D()
+        self.ui_camera = Camera2D()
+
         self.enemies = arcade.SpriteList()
         self.build_slots = arcade.SpriteList()
         self.towers = arcade.SpriteList()
@@ -451,12 +485,13 @@ class GameBase(arcade.View):
         for x, y in self.build_place:
             self.build_slots.append(BuildTowerPlace(x, y))
 
-        self.ui.enable()
+        # self.ui.enable()
 
     def hide_ui(self):
         self.ui.disable()
 
     def close_game(self, event):
+        self.button_sound.play()
         main_screen = MenuView()
         self.window.show_view(main_screen)
 
@@ -482,12 +517,13 @@ class GameBase(arcade.View):
                 self.road_sprites.append(spr)
 
     def on_mouse_press(self, x, y, button, modifiers):
+        world_x, world_y, world_z = self.world_camera.unproject((x, y))
         if self.open:
             return
         if button != arcade.MOUSE_BUTTON_LEFT:
             return
-        hits_spot = arcade.get_sprites_at_point((x, y), self.build_slots)
-        hits_towers = arcade.get_sprites_at_point((x, y), self.towers)
+        hits_spot = arcade.get_sprites_at_point((world_x,world_y), self.build_slots)
+        hits_towers = arcade.get_sprites_at_point((world_x, world_y), self.towers)
 
         if not hits_spot and not hits_towers:
             return
@@ -505,16 +541,17 @@ class GameBase(arcade.View):
                 return
 
     def tower_upg_menu(self, tower):
+        world_x, world_y = self.world_camera.project((tower.center_x, tower.center_y))
         self.open = True
 
         self.button2 = UIFlatButton(text=f'Улучшение {tower.upg_cost}', width=220, height=40, font_name="Pharmakon")
-        self.button2.center_x = tower.center_x
-        self.button2.center_y = tower.center_y + 40
+        self.button2.center_x = world_x
+        self.button2.center_y = world_y + 40
         self.button2.on_click = lambda upg: self.upg_tower(tower)
 
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
-        self.leave_menu_button.center_x = tower.center_x
-        self.leave_menu_button.center_y = tower.center_y - 100
+        self.leave_menu_button.center_x = world_x
+        self.leave_menu_button.center_y = world_y - 100
         self.leave_menu_button.on_click = lambda leave: self.close_tower_menu(tower)
 
         self.ui.add(self.button2)
@@ -531,23 +568,25 @@ class GameBase(arcade.View):
         self.close_tower_menu(tower)
 
     def close_tower_menu(self, tower):
+        self.button_sound.play()
         self.ui.remove(self.button2)
         self.ui.remove(self.leave_menu_button)
         self.open = False
 
     def open_tower_menu(self, spot):
+        self.button_sound.play()
         self.open = True
         self.selected_spot = spot
         spot.color = arcade.color.GREEN
-
+        world_x, world_y = self.world_camera.project((spot.center_x, spot.center_y))
         self.button1 = UIFlatButton(text=f'Яблоня {tower_types["apple"]}', width=220, height=40, font_name="Pharmakon")
-        self.button1.center_x = spot.center_x
-        self.button1.center_y = spot.center_y + 50
+        self.button1.center_x = world_x
+        self.button1.center_y = world_y + 50
         self.button1.on_click = lambda build_apple: self.build_tower("apple")
 
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
-        self.leave_menu_button.center_x = spot.center_x
-        self.leave_menu_button.center_y = spot.center_y - 50
+        self.leave_menu_button.center_x = world_x
+        self.leave_menu_button.center_y = world_y - 50
         self.leave_menu_button.on_click = lambda leave: self.close_spot_menu(spot)
 
         self.ui.add(self.button1)
@@ -561,6 +600,7 @@ class GameBase(arcade.View):
         self.selected_spot = None
 
     def build_tower(self, tower_type):
+        self.button_sound.play()
         cost = tower_types[tower_type]
         if self.money < cost:
             return
@@ -599,8 +639,54 @@ class GameBase(arcade.View):
                 mutation_callback=self.gravity_drag,
             ),
         )
+    def camera_limit(self):
+        view_x = self.window.width / self.zoom
+        view_y = self.window.height / self.zoom
+
+        min_x = view_x / 2
+        max_x = self.world_width - view_x / 2
+        min_y = view_y / 2
+        max_y = self.world_height - view_y / 2
+
+        cx, cy = self.world_camera.position
+
+        if max_x < min_x:
+            cx = self.world_width / 2
+        else:
+            cx = max(min_x, min(cx, max_x))
+
+        if max_y < min_y:
+            cy = self.world_height / 2
+        else:
+            cy = max(min_y, min(cy, max_y))
+
+        self.world_camera.position = (cx, cy)
+
+
+
 
     def on_update(self, delta_time):
+        dx = dy = 0.0
+        speed = self.cam_speed * delta_time / self.zoom
+
+        if self.move_left:
+            dx -= speed
+            self.camera_limit()
+        if self.move_right:
+            dx += speed
+            self.camera_limit()
+        if self.move_up:
+            dy += speed
+            self.camera_limit()
+        if self.move_down:
+            dy -= speed
+            self.camera_limit()
+
+        if dx or dy:
+            x, y = self.world_camera.position
+            self.world_camera.position = (x + dx, y + dy)
+            self.camera_limit()
+        self.camera_limit()
         self.spawn_timer += delta_time
 
         if self.spawn_timer >= 3 or self.start:
@@ -682,11 +768,13 @@ class GameBase(arcade.View):
             del self.building_towers[tower]
     def on_draw(self):
         self.clear()
-        texture_rectangle = arcade.XYWH(self.window.width // 2, self.window.height // 2, self.window.width,
+        self.world_camera.use()
+        texture_rectangle = arcade.LBWH(0, 0, self.window.width,
                                         self.window.height)
         arcade.draw_texture_rect(self.background_texture, texture_rectangle)
         arcade.draw_line_strip(self.path, arcade.color.GREEN, 10)
-        arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.BLACK, 24, font_name="Pharmakon")
+        texture_rectangle1 = arcade.LBWH(1920, 0, self.window.width, self.window.height)
+        arcade.draw_texture_rect(self.background_texture1, texture_rectangle1)
         self.road_sprites.draw()
         self.build_slots.draw()
         self.enemies.draw()
@@ -699,10 +787,30 @@ class GameBase(arcade.View):
         for x, y in self.path:
             arcade.draw_circle_filled(x, y, 2, arcade.color.ORANGE)
 
-        self.enemies.draw()
+        self.ui_camera.use()
+        arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.BLACK, 24, font_name="Pharmakon")
         arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 24, font_name="Pharmakon")
         self.ui.draw()
 
+    def on_key_press(self, key, modifiers):
+        if key in (arcade.key.A, arcade.key.LEFT):
+            self.move_left = True
+        elif key in (arcade.key.D, arcade.key.RIGHT):
+            self.move_right = True
+        elif key in (arcade.key.W, arcade.key.UP):
+            self.move_up = True
+        elif key in (arcade.key.S, arcade.key.DOWN):
+            self.move_down = True
+
+    def on_key_release(self, key, modifiers):
+        if key in (arcade.key.A, arcade.key.LEFT):
+            self.move_left = False
+        elif key in (arcade.key.D, arcade.key.RIGHT):
+            self.move_right = False
+        elif key in (arcade.key.W, arcade.key.UP):
+            self.move_up = False
+        elif key in (arcade.key.S, arcade.key.DOWN):
+            self.move_down = False
 
 class Level1View(GameBase):
     path = [(64 * 2.5, 500 * 1.8 - 50), (736 * 2.5, 500 * 1.8 - 50), (64 * 2.5, 128 * 1.8 - 50),
@@ -711,6 +819,7 @@ class Level1View(GameBase):
                    (500 * 2.5 + 50, 450 * 1.8 - 75), (200 * 2.5 + 50, 450 * 1.8 - 550),
                    (350 * 2.5 + 50, 450 * 1.8 - 550), (500 * 2.5 + 50, 450 * 1.8 - 550)]
     background_path = "imgs/задний фон.png"
+    background_path1 = "imgs/так_называемая_роща.png"
     # каждый список внутри списка - мобы волны
     wave_lists = [[(1, Enemy)], [(3, Enemy), (2, Enemy)], [(2, Blue_Enemy), (2, Red_Enemy), (3, Enemy)],
                   [(2, Blue_Enemy), (2, Red_Enemy), (3, Enemy), (3, Blue_Enemy)],
@@ -722,6 +831,7 @@ class Level2View(GameBase):
     path = [(200, 200), (200, 850), (900, 850), (900, 200), (1450, 200), (1450, 500), (1800, 500)]
     build_place = [(300, 500), (550, 750), (800, 500), (1175, 300), (1625, 400)]
     background_path = "imgs/задний фон.png"
+    background_path1 = "imgs/так_называемая_роща.png"
     # каждый список внутри списка - мобы волны
     wave_lists = [[(1 * 2, Enemy)], [(3 * 2, Enemy), (2 * 2, Enemy)],
                   [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy)],
@@ -782,7 +892,7 @@ class AppleTower(arcade.Sprite):
 class Projectile(arcade.Sprite):
     def __init__(self, start_x, start_y, enemy, speed=800, damage=10):
         super().__init__()
-        self.texture = arcade.load_texture(":resources:/images/space_shooter/laserBlue01.png")
+        self.texture = arcade.load_texture("imgs/яблоко_снаряд.png")
         self.center_x = start_x
         self.center_y = start_y
         self.speed = speed
@@ -817,8 +927,7 @@ class Projectile(arcade.Sprite):
         self.change_y = math.sin(angle) * self.speed
         # Если текстура ориентирована по умолчанию вправо, то поворачиваем пулю в сторону цели
         # Для другой ориентации нужно будет подправить угол
-        self.angle = math.degrees(-angle)
-
+        self.angle += 1440 * delta_time
         self.center_x += self.change_x * delta_time
         self.center_y += self.change_y * delta_time
 
