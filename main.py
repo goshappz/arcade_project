@@ -745,7 +745,7 @@ class GameBase(arcade.View):
                     if self.spawn_timer >= 2.5:
                         self.wave += 1
                         if self.kills != 0:
-                            self.money += 10
+                            self.money += 5
                         self.pack = 0
                         self.spawn_timer = 0.0
 
@@ -1067,7 +1067,8 @@ class NutsTower(AppleTower):
         super().__init__(x, y, scale, img, dmg)
         self.range = 300
         self.upg_cost = 70
-        self.fire_rate = 0.5
+        self.fire_rate = 0.4
+        self.fire_rate = 0.4
 
     def update_tower(self, delta_time, enemies, projectiles):
         self.cooldown -= delta_time
@@ -1086,7 +1087,7 @@ class CherryTower(AppleTower):
         super().__init__(x, y, scale, img, dmg)
         self.range = 200
         self.upg_cost = 80
-        self.fire_rate = 0.7
+        self.fire_rate = 0.6
 
     def find_target(self, enemies):
         ans = []
