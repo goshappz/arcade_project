@@ -1,4 +1,3 @@
-
 import arcade
 from arcade.gui import UIManager, UIFlatButton, UITextureButton, UILabel, UIInputText, UITextArea, UISlider, UIDropdown, \
     UIMessageBox
@@ -15,6 +14,7 @@ screen_info = arcade.get_screens()
 primary_screen = screen_info[0]
 WIDHT = primary_screen.width
 HEIGHT = primary_screen.height
+
 
 class MenuView(arcade.View):
     def __init__(self):
@@ -43,12 +43,13 @@ class MenuView(arcade.View):
                         width=300,
                         multiline=True,
                         align="center",
-                        font_name="Pharmakon",)
+                        font_name="Pharmakon", )
         self.box_layout.add(label)
         play_button = UIFlatButton(text="Играть", width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
         play_button.on_click = self.play_game
         self.box_layout.add(play_button)
-        sts_button = UIFlatButton(text="Статистика", width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
+        sts_button = UIFlatButton(text="Статистика", width=200, height=50, color=arcade.color.BLUE,
+                                  font_name="Pharmakon")
         sts_button.on_click = self.sts_screen
         self.box_layout.add(sts_button)
         ext_button2 = UIFlatButton(text="Выход", width=200, height=50, color=arcade.color.RED, font_name="Pharmakon")
@@ -80,6 +81,7 @@ class MenuView(arcade.View):
     def on_hide_view(self):
         self.manager.disable()
 
+
 class StsView(arcade.View):
     def __init__(self):
         super().__init__()
@@ -96,7 +98,6 @@ class StsView(arcade.View):
         self.manager = UIManager()
         self.manager.enable()
         self.setup_widgets()
-
 
     def setup_widgets(self):
         label_ttl = UILabel(text='Статистика',
@@ -149,6 +150,7 @@ class StsView(arcade.View):
 
     def on_hide_view(self):
         self.manager.disable()
+
 
 class EndView(arcade.View):
     def __init__(self, name, stats, res):
@@ -270,7 +272,8 @@ class LevelSelectionView(arcade.View):
         label.center_x = 400
         label.center_y = 300
 
-        button_level_1 = UIFlatButton(text='Первый уровень', width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
+        button_level_1 = UIFlatButton(text='Первый уровень', width=200, height=50, color=arcade.color.BLUE,
+                                      font_name="Pharmakon")
         button_level_1.on_click = self.play_level_1
         button_level_1.center_x = 100
         button_level_1.center_y = 100
@@ -278,7 +281,8 @@ class LevelSelectionView(arcade.View):
         self.manager.add(label)
         self.manager.add(button_level_1)
 
-        button_level_2 = UIFlatButton(text='Второй уровень', width=200, height=50, color=arcade.color.BLUE, font_name="Pharmakon")
+        button_level_2 = UIFlatButton(text='Второй уровень', width=200, height=50, color=arcade.color.BLUE,
+                                      font_name="Pharmakon")
         button_level_2.on_click = self.play_level_2
 
         self.manager.add(label)
@@ -357,6 +361,7 @@ class Enemy(arcade.Sprite):
 
     def get_dmg(self, dmg):
         self.hp -= dmg
+
 
 class Snail(Enemy):
     def __init__(self, path_points, speed=75, hp=200, scale=2,
@@ -442,7 +447,6 @@ class GameBase(arcade.View):
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
         self.leave_menu_button.on_click = lambda leave: self.close_spot_menu(spot)
 
-
         self.cam_speed = 900
         self.zoom = 1.0
         self.zoom_min = 0.5
@@ -485,6 +489,7 @@ class GameBase(arcade.View):
 
         # Добавим все виджеты в box, потом box в anchor
         self.setup_widgets()
+
     def setup_widgets(self):
         self.wave_label = UILabel(text=f"Wave {self.wave}/{len(self.wave_lists)}",
                                   font_size=55,
@@ -559,7 +564,7 @@ class GameBase(arcade.View):
             return
         if button != arcade.MOUSE_BUTTON_LEFT:
             return
-        hits_spot = arcade.get_sprites_at_point((world_x,world_y), self.build_slots)
+        hits_spot = arcade.get_sprites_at_point((world_x, world_y), self.build_slots)
         hits_towers = arcade.get_sprites_at_point((world_x, world_y), self.towers)
 
         if not hits_spot and not hits_towers:
@@ -713,6 +718,7 @@ class GameBase(arcade.View):
                 mutation_callback=self.gravity_drag,
             ),
         )
+
     def camera_limit(self):
         view_x = self.window.width / self.zoom
         view_y = self.window.height / self.zoom
@@ -735,9 +741,6 @@ class GameBase(arcade.View):
             cy = max(min_y, min(cy, max_y))
 
         self.world_camera.position = (cx, cy)
-
-
-
 
     def on_update(self, delta_time):
         dx = dy = 0.0
@@ -852,12 +855,10 @@ class GameBase(arcade.View):
         for x, y in self.path:
             arcade.draw_circle_filled(x, y, 2, arcade.color.ORANGE)
 
-
         arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.BLACK, 24, font_name="Pharmakon")
         arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 24, font_name="Pharmakon")
         self.ui.draw()
         self.ui_camera.use()
-
 
     def on_key_press(self, key, modifiers):
         if key in (arcade.key.A, arcade.key.LEFT):
@@ -878,6 +879,7 @@ class GameBase(arcade.View):
             self.move_up = False
         elif key in (arcade.key.S, arcade.key.DOWN):
             self.move_down = False
+
 
 class Level1View(GameBase):
     path = [(64 * 2.5, 500 * 1.8 - 50), (736 * 2.5, 500 * 1.8 - 50), (64 * 2.5, 128 * 1.8 - 50),
@@ -905,7 +907,8 @@ class Level2View(GameBase):
                   [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy), (3 * 2, Blue_Enemy)],
                   [(1, Snail), (2, Snail)],
                   [(4 * 2, Blue_Enemy), (4 * 2, Red_Enemy), (2, Snail), (1 * 2, Enemy)],
-                  [(2 * 3, Blue_Enemy), (3, Snail), (2 * 3, Red_Enemy), (3 * 3, Enemy), (2, Snail), (3 * 3, Blue_Enemy)],
+                  [(2 * 3, Blue_Enemy), (3, Snail), (2 * 3, Red_Enemy), (3 * 3, Enemy), (2, Snail),
+                   (3 * 3, Blue_Enemy)],
                   [(4 * 3, Blue_Enemy), (2, Snail), (4 * 3, Red_Enemy), (1 * 3, Enemy), (2, Snail), (2, Snail)],
                   [(4 * 3, Blue_Enemy), (2, Snail), (4 * 3, Red_Enemy), (1 * 3, Enemy), (2, Snail), (2, Snail),
                    (2, Snail), (4 * 3, Red_Enemy), (1 * 3, Enemy)]]
@@ -934,12 +937,12 @@ class AppleTower(arcade.Sprite):
         self.damage = dmg
         self.projectile_speed = 450
         self.label = UILabel(text=str(self.lvl),
-                                  font_size=30,
-                                  text_color=(0, 0, 0),
-                                  width=300,
-                                  multiline=True,
-                                  align="center",
-                                  font_name="Pharmakon")
+                             font_size=30,
+                             text_color=(0, 0, 0),
+                             width=300,
+                             multiline=True,
+                             align="center",
+                             font_name="Pharmakon")
         self.label.center_x = x
         self.label.center_y = y - 70
 
@@ -957,12 +960,12 @@ class AppleTower(arcade.Sprite):
 
     def chng_lbl(self):
         self.label = UILabel(text=str(self.lvl),
-                                  font_size=30,
-                                  text_color=(0, 0, 0),
-                                  width=300,
-                                  multiline=True,
-                                  align="center",
-                                  font_name="Pharmakon")
+                             font_size=30,
+                             text_color=(0, 0, 0),
+                             width=300,
+                             multiline=True,
+                             align="center",
+                             font_name="Pharmakon")
         self.label.center_x = self.center_x
         self.label.center_y = self.center_y - 75
 
@@ -1034,7 +1037,6 @@ class Projectile(arcade.Sprite):
             self.remove_from_sprite_lists()
 
 
-
 class Projectile_Nut(Projectile):
     def __init__(self, start_x, start_y, enemy, speed, damage):
         super().__init__(start_x, start_y, enemy, speed, damage)
@@ -1080,8 +1082,6 @@ class Projectile_Cherry(Projectile):
         self.texture = arcade.load_texture("imgs/вишня_снаряд.png")
 
 
-
-
 class NutsTower(AppleTower):
     def __init__(self, x, y, scale=3.0, img='imgs/Ореховое_дерево.png', dmg=50):
         super().__init__(x, y, scale, img, dmg)
@@ -1098,9 +1098,11 @@ class NutsTower(AppleTower):
         if not target:
             return
 
-        projectile = Projectile_Nut(self.center_x, self.center_y, target, speed=self.projectile_speed, damage=self.damage)
+        projectile = Projectile_Nut(self.center_x, self.center_y, target, speed=self.projectile_speed,
+                                    damage=self.damage)
         projectiles.append(projectile)
         self.cooldown = 1.0 / self.fire_rate
+
 
 class CherryTower(AppleTower):
     def __init__(self, x, y, scale=3.0, img='imgs/вишневое_дерево.png', dmg=34):
@@ -1128,12 +1130,10 @@ class CherryTower(AppleTower):
             return
 
         for target in targets:
-            projectile = Projectile_Cherry(self.center_x, self.center_y, target, speed=self.projectile_speed, damage=self.damage)
+            projectile = Projectile_Cherry(self.center_x, self.center_y, target, speed=self.projectile_speed,
+                                           damage=self.damage)
             projectiles.append(projectile)
         self.cooldown = 1.0 / self.fire_rate
-
-
-
 
 
 window = arcade.Window(
