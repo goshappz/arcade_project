@@ -882,7 +882,7 @@ class AppleTower(arcade.Sprite):
         self.lvl = 0
         self.upg_cost = 60
         self.range = 350
-        self.fire_rate = 0.3
+        self.fire_rate = 0.4
         self.cooldown = 0.0
         self.damage = dmg
         self.projectile_speed = 450
@@ -1016,7 +1016,7 @@ class Projectile_Cherry(Projectile):
 
 
 class NutsTower(AppleTower):
-    def __init__(self, x, y, scale=2.0, img='imgs/Ореховое_дерево.png', dmg=75):
+    def __init__(self, x, y, scale=2.0, img='imgs/Ореховое_дерево.png', dmg=50):
         super().__init__(x, y, scale, img, dmg)
         self.range = 400
         self.upg_cost = 70
@@ -1037,7 +1037,7 @@ class NutsTower(AppleTower):
 class CherryTower(AppleTower):
     def __init__(self, x, y, scale=2.0, img='imgs/Грушевое_дерево.png', dmg=34):
         super().__init__(x, y, scale, img, dmg)
-        self.range = 300
+        self.range = 200
         self.upg_cost = 80
         self.fire_rate = 0.7
 
