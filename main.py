@@ -10,7 +10,7 @@ import math
 import random
 
 arcade.load_font("font/Pharmakon.otf")
-tower_types = {"apple": 50}
+tower_types = {"apple": 50, 'nut': 60, 'cherry': 70}
 screen_info = arcade.get_screens()
 primary_screen = screen_info[0]
 WIDHT = primary_screen.width
@@ -377,7 +377,7 @@ class Red_Enemy(Enemy):
                 arcade.make_soft_circle_texture(6, (255, 140, 0)),
             ]):
         super().__init__(path_points, speed, hp, scale,
-                         img, money)
+                         img, money, SPARK_TEX)
 
 
 class GameBase(arcade.View):
@@ -535,10 +535,7 @@ class GameBase(arcade.View):
                 self.open_tower_menu(spot)
         elif hits_towers and not hits_spot:
             tower = hits_towers[0]
-            if tower.fire_rate + 0.1 <= 1:
-                self.tower_upg_menu(tower)
-            else:
-                return
+            self.tower_upg_menu(tower)
 
     def tower_upg_menu(self, tower):
         world_x, world_y = self.world_camera.project((tower.center_x, tower.center_y))
@@ -584,15 +581,29 @@ class GameBase(arcade.View):
         self.button1.center_y = world_y + 50
         self.button1.on_click = lambda build_apple: self.build_tower("apple")
 
+        self.button2 = UIFlatButton(text=f'Орех {tower_types["nut"]}', width=220, height=40, font_name="Pharmakon")
+        self.button2.center_x = world_x
+        self.button2.center_y = world_y + 100
+        self.button2.on_click = lambda build_apple: self.build_tower("nut")
+
+        self.button3 = UIFlatButton(text=f'Вишня {tower_types["cherry"]}', width=220, height=40, font_name="Pharmakon")
+        self.button3.center_x = world_x
+        self.button3.center_y = world_y + 150
+        self.button3.on_click = lambda build_apple: self.build_tower("cherry")
+
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
         self.leave_menu_button.center_x = world_x
         self.leave_menu_button.center_y = world_y - 50
         self.leave_menu_button.on_click = lambda leave: self.close_spot_menu(spot)
 
+        self.ui.add(self.button3)
+        self.ui.add(self.button2)
         self.ui.add(self.button1)
         self.ui.add(self.leave_menu_button)
 
     def close_spot_menu(self, spot):
+        self.ui.remove(self.button3)
+        self.ui.remove(self.button2)
         self.ui.remove(self.button1)
         self.ui.remove(self.leave_menu_button)
         spot.color = arcade.color.GRAY
@@ -614,6 +625,27 @@ class GameBase(arcade.View):
                 "elapsed": 0.0,
                 "frame_time": 0.15,  # сек на кадр
             }
+            self.build_slots.remove(spot)
+            spot.taken = tower_type
+            spot.color = arcade.color.DARK_GRAY
+            self.money -= cost
+            self.close_spot_menu(spot)
+        elif tower_type == "nut":
+            spot = self.selected_spot
+            tower = NutsTower(spot.center_x, spot.center_y + 45)
+            self.towers.append(tower)
+
+            self.build_slots.remove(spot)
+            spot.taken = tower_type
+            spot.color = arcade.color.DARK_GRAY
+            self.money -= cost
+            self.close_spot_menu(spot)
+
+        elif tower_type == "cherry":
+            spot = self.selected_spot
+            tower = CherryTower(spot.center_x, spot.center_y + 45)
+            self.towers.append(tower)
+
             self.build_slots.remove(spot)
             spot.taken = tower_type
             spot.color = arcade.color.DARK_GRAY
@@ -735,17 +767,7 @@ class GameBase(arcade.View):
             tower.update_tower(delta_time, self.enemies, self.projectiles)
 
         for projectile in self.projectiles:
-            hit = arcade.check_for_collision(projectile, projectile.enemy)
-            if hit:
-                enemy = projectile.enemy
-                enemy.hp -= projectile.damage
-                if enemy.hp <= 0:
-                    self.money += enemy.money
-                    if enemy in self.enemies:
-                        self.emitters.append(self.make_explosion(enemy.center_x, enemy.center_y, enemy.SPARK_TEX))
-                        self.kills += 1
-                    enemy.remove_from_sprite_lists()
-                projectile.remove_from_sprite_lists()
+            projectile.shot(self)
 
         emitters_copy = self.emitters.copy()  # Защищаемся от мутаций списка
         for e in emitters_copy:
@@ -852,7 +874,7 @@ class BuildTowerPlace(arcade.Sprite):
 
 
 class AppleTower(arcade.Sprite):
-    def __init__(self, x, y, scale=2.0, img='imgs/яблонявзрослая.png'):
+    def __init__(self, x, y, scale=2.0, img='imgs/яблонявзрослая.png', dmg=100):
         super().__init__(img, scale=scale)
         self.center_x = x
         self.center_y = y
@@ -860,9 +882,9 @@ class AppleTower(arcade.Sprite):
         self.lvl = 0
         self.upg_cost = 60
         self.range = 350
-        self.fire_rate = 0.5
+        self.fire_rate = 0.3
         self.cooldown = 0.0
-        self.damage = 100
+        self.damage = dmg
         self.projectile_speed = 450
 
     def update_tower(self, delta_time, enemies, projectiles):
@@ -890,7 +912,7 @@ class AppleTower(arcade.Sprite):
 
 
 class Projectile(arcade.Sprite):
-    def __init__(self, start_x, start_y, enemy, speed=800, damage=10):
+    def __init__(self, start_x, start_y, enemy, speed, damage):
         super().__init__()
         self.texture = arcade.load_texture("imgs/яблоко_снаряд.png")
         self.center_x = start_x
@@ -930,6 +952,121 @@ class Projectile(arcade.Sprite):
         self.angle += 1440 * delta_time
         self.center_x += self.change_x * delta_time
         self.center_y += self.change_y * delta_time
+
+    def shot(self, gb):
+        hit = arcade.check_for_collision(self, self.enemy)
+        if hit:
+            enemy = self.enemy
+            enemy.hp -= self.damage
+            if enemy.hp <= 0:
+                gb.money += enemy.money
+                if enemy in gb.enemies:
+                    gb.emitters.append(gb.make_explosion(enemy.center_x, enemy.center_y, enemy.SPARK_TEX))
+                    gb.kills += 1
+                enemy.remove_from_sprite_lists()
+            self.remove_from_sprite_lists()
+
+
+
+class Projectile_Nut(Projectile):
+    def __init__(self, start_x, start_y, enemy, speed, damage):
+        super().__init__(start_x, start_y, enemy, speed, damage)
+        self.texture = arcade.load_texture("imgs/яблоко_снаряд.png")
+        self.hits = 0
+        self.range = 100
+        self.enemyz = []
+
+    def find_target(self, enemies, enemy):
+        ans = None
+        steps = -1
+
+        for i in enemies:
+            d = math.hypot(i.center_x - self.center_x, i.center_y - self.center_y)
+            if d <= self.range and steps <= i.way and i not in enemy:
+                steps = i.way
+                ans = i
+        return ans
+
+    def shot(self, gb):
+        hit = arcade.check_for_collision(self, self.enemy)
+        if hit:
+            enemy = self.enemy
+            enemy.hp -= self.damage
+            self.enemyz.append(self.enemy)
+            self.hits += 1
+            if enemy.hp <= 0:
+                gb.money += enemy.money
+                if enemy in gb.enemies:
+                    gb.emitters.append(gb.make_explosion(enemy.center_x, enemy.center_y, enemy.SPARK_TEX))
+                    gb.kills += 1
+                enemy.remove_from_sprite_lists()
+            self.enemy = self.find_target(gb.enemies, self.enemyz)
+            if not self.enemy:
+                self.remove_from_sprite_lists()
+            if self.hits == 3:
+                self.remove_from_sprite_lists()
+
+
+class Projectile_Cherry(Projectile):
+    def __init__(self, start_x, start_y, enemy, speed, damage):
+        super().__init__(start_x, start_y, enemy, speed, damage)
+        self.texture = arcade.load_texture("imgs/яблоко_снаряд.png")
+
+
+
+
+class NutsTower(AppleTower):
+    def __init__(self, x, y, scale=2.0, img='imgs/Ореховое_дерево.png', dmg=75):
+        super().__init__(x, y, scale, img, dmg)
+        self.range = 400
+        self.upg_cost = 70
+        self.fire_rate = 0.6
+
+    def update_tower(self, delta_time, enemies, projectiles):
+        self.cooldown -= delta_time
+        if self.cooldown > 0:
+            return
+        target = self.find_target(enemies)
+        if not target:
+            return
+
+        projectile = Projectile_Nut(self.center_x, self.center_y, target, speed=self.projectile_speed, damage=self.damage)
+        projectiles.append(projectile)
+        self.cooldown = 1.0 / self.fire_rate
+
+class CherryTower(AppleTower):
+    def __init__(self, x, y, scale=2.0, img='imgs/Грушевое_дерево.png', dmg=34):
+        super().__init__(x, y, scale, img, dmg)
+        self.range = 300
+        self.upg_cost = 80
+        self.fire_rate = 0.7
+
+    def find_target(self, enemies):
+        ans = []
+        steps = -1
+
+        for i in enemies:
+            d = math.hypot(i.center_x - self.center_x, i.center_y - self.center_y)
+            if d <= self.range:
+                ans.append(i)
+        return ans
+
+    def update_tower(self, delta_time, enemies, projectiles):
+        self.cooldown -= delta_time
+        if self.cooldown > 0:
+            return
+        targets = self.find_target(enemies)
+        if len(targets) == 0:
+            return
+
+        for target in targets:
+            print(42)
+            projectile = Projectile_Cherry(self.center_x, self.center_y, target, speed=self.projectile_speed, damage=self.damage)
+            projectiles.append(projectile)
+        self.cooldown = 1.0 / self.fire_rate
+
+
+
 
 
 window = arcade.Window(
