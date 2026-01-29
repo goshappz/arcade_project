@@ -417,6 +417,16 @@ class GameBase(arcade.View):
         arcade.load_texture("imgs/яблоня_средняя.png"),
         arcade.load_texture("imgs/яблонявзрослая.png"),
     ]
+    cherry_tree_texture = [
+        arcade.load_texture("imgs/вишня_в_горшке.png"),
+        arcade.load_texture("imgs/вишня_подросток.png"),
+        arcade.load_texture("imgs/вишневое_дерево.png"),
+    ]
+    nut_tree_texture = [
+        arcade.load_texture("imgs/орех_в_горшке.png"),
+        arcade.load_texture("imgs/орех_подростокpng.png"),
+        arcade.load_texture("imgs/Ореховое_дерево.png"),
+    ]
 
     def __init__(self):
         super().__init__()
@@ -445,7 +455,7 @@ class GameBase(arcade.View):
         self.button3.on_click = lambda build_apple: self.build_tower("cherry")
 
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
-        self.leave_menu_button.on_click = lambda leave: self.close_spot_menu(spot)
+        self.leave_menu_button.on_click = lambda leave: self.close_spot_menu()
 
         self.cam_speed = 900
         self.zoom = 1.0
@@ -455,7 +465,7 @@ class GameBase(arcade.View):
         self.world_height = 1080
         self.endTimer = 0
         self.zabs = arcade.SpriteList()
-        self.zab = arcade.Sprite('imgs/забор.png', 1)
+        self.zab = arcade.Sprite('imgs/забор.png', 3)
         self.zab.center_x = self.path[-1][0] + 45
         self.zab.center_y = self.path[-1][1]
         self.zabs.append(self.zab)
@@ -679,8 +689,14 @@ class GameBase(arcade.View):
         elif tower_type == "nut":
             spot = self.selected_spot
             tower = NutsTower(spot.center_x, spot.center_y + 45)
+            tower.texture = self.nut_tree_texture[0]
             self.towers.append(tower)
             self.ui.add(tower.label)
+            self.building_towers[tower] = {
+                "textures": self.nut_tree_texture,
+                "elapsed": 0.0,
+                "frame_time": 0.15,  # сек на кадр
+            }
             self.build_slots.remove(spot)
             spot.taken = tower_type
             spot.color = arcade.color.DARK_GRAY
@@ -691,8 +707,14 @@ class GameBase(arcade.View):
         elif tower_type == "cherry":
             spot = self.selected_spot
             tower = CherryTower(spot.center_x, spot.center_y + 45)
+            tower.texture = self.cherry_tree_texture[0]
             self.towers.append(tower)
             self.ui.add(tower.label)
+            self.building_towers[tower] = {
+                "textures": self.cherry_tree_texture,
+                "elapsed": 0.0,
+                "frame_time": 0.15,  # сек на кадр
+            }
             self.build_slots.remove(spot)
             spot.taken = tower_type
             spot.color = arcade.color.DARK_GRAY
