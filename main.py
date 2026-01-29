@@ -355,6 +355,24 @@ class Enemy(arcade.Sprite):
     def reached_end(self):
         return self.path_index >= len(self.path) - 1
 
+    def get_dmg(self, dmg):
+        self.hp -= dmg
+
+class Snail(Enemy):
+    def __init__(self, path_points, speed=75, hp=200, scale=2,
+                 img='imgs/дорога1.png', money=12, SPARK_TEX=[
+                arcade.make_soft_circle_texture(6, (60, 179, 113)),
+                arcade.make_soft_circle_texture(6, (0, 100, 0)),
+                arcade.make_soft_circle_texture(6, (128, 128, 0)),
+                arcade.make_soft_circle_texture(6, (0, 128, 0)),
+                arcade.make_soft_circle_texture(6, (173, 255, 47))
+            ]):
+        super().__init__(path_points, speed, hp, scale,
+                         img, money, SPARK_TEX)
+
+    def get_dmg(self, dmg):
+        self.hp -= dmg * 0.7
+
 
 class Blue_Enemy(Enemy):
     def __init__(self, path_points, speed=100, hp=150, scale=2,
@@ -858,10 +876,12 @@ class Level2View(GameBase):
     wave_lists = [[(1 * 2, Enemy)], [(3 * 2, Enemy), (2 * 2, Enemy)],
                   [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy)],
                   [(2 * 2, Blue_Enemy), (2 * 2, Red_Enemy), (3 * 2, Enemy), (3 * 2, Blue_Enemy)],
-                  [(4 * 2, Blue_Enemy), (4 * 2, Red_Enemy), (1 * 2, Enemy)],
-                  [(2 * 3, Blue_Enemy), (2 * 3, Red_Enemy), (3 * 3, Enemy), (3 * 3, Blue_Enemy)],
-                  [(4 * 3, Blue_Enemy), (4 * 3, Red_Enemy), (1 * 3, Enemy)]
-                  ]
+                  [(1, Snail), (2, Snail)],
+                  [(4 * 2, Blue_Enemy), (4 * 2, Red_Enemy), (2, Snail), (1 * 2, Enemy)],
+                  [(2 * 3, Blue_Enemy), (3, Snail), (2 * 3, Red_Enemy), (3 * 3, Enemy), (2, Snail), (3 * 3, Blue_Enemy)],
+                  [(4 * 3, Blue_Enemy), (2, Snail), (4 * 3, Red_Enemy), (1 * 3, Enemy), (2, Snail), (2, Snail)],
+                  [(4 * 3, Blue_Enemy), (2, Snail), (4 * 3, Red_Enemy), (1 * 3, Enemy), (2, Snail), (2, Snail),
+                   (2, Snail), (4 * 3, Red_Enemy), (1 * 3, Enemy)]]
     name = 'Level2'
 
 
@@ -957,7 +977,7 @@ class Projectile(arcade.Sprite):
         hit = arcade.check_for_collision(self, self.enemy)
         if hit:
             enemy = self.enemy
-            enemy.hp -= self.damage
+            enemy.get_dmg(self.damage)
             if enemy.hp <= 0:
                 gb.money += enemy.money
                 if enemy in gb.enemies:
@@ -1018,7 +1038,7 @@ class Projectile_Cherry(Projectile):
 class NutsTower(AppleTower):
     def __init__(self, x, y, scale=2.0, img='imgs/Ореховое_дерево.png', dmg=50):
         super().__init__(x, y, scale, img, dmg)
-        self.range = 400
+        self.range = 300
         self.upg_cost = 70
         self.fire_rate = 0.6
 
@@ -1037,7 +1057,7 @@ class NutsTower(AppleTower):
 class CherryTower(AppleTower):
     def __init__(self, x, y, scale=2.0, img='imgs/Грушевое_дерево.png', dmg=34):
         super().__init__(x, y, scale, img, dmg)
-        self.range = 200
+        self.range = 250
         self.upg_cost = 80
         self.fire_rate = 0.7
 
