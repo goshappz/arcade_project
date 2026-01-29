@@ -371,7 +371,7 @@ class Snail(Enemy):
                          img, money, SPARK_TEX)
 
     def get_dmg(self, dmg):
-        self.hp -= dmg * 0.7
+        self.hp -= dmg * 0.5
 
 
 class Blue_Enemy(Enemy):
@@ -436,8 +436,9 @@ class GameBase(arcade.View):
         self.zoom_max = 1.0
         self.world_width = 3840
         self.world_height = 1080
+        self.endTimer = 0
 
-        self.money = 90
+        self.money = 58
         self.spawn_timer = 0.0
         self.base_hp = 3
         self.start = 0
@@ -580,6 +581,9 @@ class GameBase(arcade.View):
         tower.upg_cost += 10
         tower.fire_rate += 0.1
         self.money -= cost
+        self.ui.remove(tower.label)
+        tower.chng_lbl()
+        self.ui.add(tower.label)
         self.close_tower_menu(tower)
 
     def close_tower_menu(self, tower):
@@ -638,6 +642,7 @@ class GameBase(arcade.View):
             tower = AppleTower(spot.center_x, spot.center_y + 45)
             tower.texture = self.apple_tree_textures[0]
             self.towers.append(tower)
+            self.ui.add(tower.label)
             self.building_towers[tower] = {
                 "textures": self.apple_tree_textures,
                 "elapsed": 0.0,
@@ -652,18 +657,19 @@ class GameBase(arcade.View):
             spot = self.selected_spot
             tower = NutsTower(spot.center_x, spot.center_y + 45)
             self.towers.append(tower)
-
+            self.ui.add(tower.label)
             self.build_slots.remove(spot)
             spot.taken = tower_type
             spot.color = arcade.color.DARK_GRAY
             self.money -= cost
+
             self.close_spot_menu(spot)
 
         elif tower_type == "cherry":
             spot = self.selected_spot
             tower = CherryTower(spot.center_x, spot.center_y + 45)
             self.towers.append(tower)
-
+            self.ui.add(tower.label)
             self.build_slots.remove(spot)
             spot.taken = tower_type
             spot.color = arcade.color.DARK_GRAY
@@ -719,26 +725,6 @@ class GameBase(arcade.View):
         dx = dy = 0.0
         speed = self.cam_speed * delta_time / self.zoom
 
-        if self.move_left:
-            dx -= speed
-            self.camera_limit()
-        if self.move_right:
-            dx += speed
-            self.camera_limit()
-        if self.move_up:
-            dy += speed
-            self.camera_limit()
-        if self.move_down:
-            dy -= speed
-            self.camera_limit()
-
-        if dx or dy:
-            x, y = self.world_camera.position
-            self.world_camera.position = (x + dx, y + dy)
-            self.camera_limit()
-        self.camera_limit()
-        self.spawn_timer += delta_time
-
         if self.spawn_timer >= 3 or self.start:
             if not self.start:
                 self.spawn_timer = 0
@@ -758,6 +744,8 @@ class GameBase(arcade.View):
                 else:
                     if self.spawn_timer >= 2.5:
                         self.wave += 1
+                        if self.kills != 0:
+                            self.money += 10
                         self.pack = 0
                         self.spawn_timer = 0.0
 
@@ -776,7 +764,16 @@ class GameBase(arcade.View):
                 i.remove_from_sprite_lists()
 
         if self.base_hp <= 0:
-            self.window.show_view(EndView(self.name, (self.kills, self.mobs), 'Lose'))
+            self.endTimer += delta_time
+            dx += speed
+            self.ui.remove(self.button3)
+            self.ui.remove(self.button2)
+            self.ui.remove(self.button1)
+            self.ui.remove(self.leave_menu_button)
+            for tower in self.towers:
+                self.ui.remove(tower.label)
+            if self.endTimer >= 3:
+                self.window.show_view(EndView(self.name, (self.kills, self.mobs), 'Lose'))
 
         if len(self.enemies) == 0 and self.waves == -1:
             self.window.show_view(EndView(self.name, (self.kills, self.mobs), 'Win'))
@@ -806,6 +803,14 @@ class GameBase(arcade.View):
 
         for tower in finished:
             del self.building_towers[tower]
+
+        if dx or dy:
+            x, y = self.world_camera.position
+            self.world_camera.position = (x + dx, y + dy)
+            self.camera_limit()
+        self.camera_limit()
+        self.spawn_timer += delta_time
+
     def on_draw(self):
         self.clear()
         self.world_camera.use()
@@ -827,10 +832,12 @@ class GameBase(arcade.View):
         for x, y in self.path:
             arcade.draw_circle_filled(x, y, 2, arcade.color.ORANGE)
 
-        self.ui_camera.use()
+
         arcade.draw_text(f"Money: {self.money}", 10, 50, arcade.color.BLACK, 24, font_name="Pharmakon")
         arcade.draw_text(f"HP: {self.base_hp}", 10, 10, arcade.color.BLACK, 24, font_name="Pharmakon")
         self.ui.draw()
+        self.ui_camera.use()
+
 
     def on_key_press(self, key, modifiers):
         if key in (arcade.key.A, arcade.key.LEFT):
@@ -869,7 +876,7 @@ class Level1View(GameBase):
 
 class Level2View(GameBase):
     path = [(200, 200), (200, 850), (900, 850), (900, 200), (1450, 200), (1450, 500), (1800, 500)]
-    build_place = [(300, 500), (550, 750), (800, 500), (1175, 300), (1625, 400)]
+    build_place = [(350, 350), (350, 700), (750, 700), (750, 350), (1050, 300), (1300, 300), (1625, 400)]
     background_path = "imgs/задний фон.png"
     background_path1 = "imgs/так_называемая_роща.png"
     # каждый список внутри списка - мобы волны
@@ -906,6 +913,15 @@ class AppleTower(arcade.Sprite):
         self.cooldown = 0.0
         self.damage = dmg
         self.projectile_speed = 450
+        self.label = UILabel(text=str(self.lvl),
+                                  font_size=30,
+                                  text_color=(0, 0, 0),
+                                  width=300,
+                                  multiline=True,
+                                  align="center",
+                                  font_name="Pharmakon")
+        self.label.center_x = x
+        self.label.center_y = y - 70
 
     def update_tower(self, delta_time, enemies, projectiles):
         self.cooldown -= delta_time
@@ -918,6 +934,17 @@ class AppleTower(arcade.Sprite):
         projectile = Projectile(self.center_x, self.center_y, target, speed=self.projectile_speed, damage=self.damage)
         projectiles.append(projectile)
         self.cooldown = 1.0 / self.fire_rate
+
+    def chng_lbl(self):
+        self.label = UILabel(text=str(self.lvl),
+                                  font_size=30,
+                                  text_color=(0, 0, 0),
+                                  width=300,
+                                  multiline=True,
+                                  align="center",
+                                  font_name="Pharmakon")
+        self.label.center_x = self.center_x
+        self.label.center_y = self.center_y - 75
 
     def find_target(self, enemies):
         ans = None
@@ -993,7 +1020,7 @@ class Projectile_Nut(Projectile):
         super().__init__(start_x, start_y, enemy, speed, damage)
         self.texture = arcade.load_texture("imgs/яблоко_снаряд.png")
         self.hits = 0
-        self.range = 100
+        self.range = 200
         self.enemyz = []
 
     def find_target(self, enemies, enemy):
@@ -1040,7 +1067,7 @@ class NutsTower(AppleTower):
         super().__init__(x, y, scale, img, dmg)
         self.range = 300
         self.upg_cost = 70
-        self.fire_rate = 0.6
+        self.fire_rate = 0.5
 
     def update_tower(self, delta_time, enemies, projectiles):
         self.cooldown -= delta_time
@@ -1057,7 +1084,7 @@ class NutsTower(AppleTower):
 class CherryTower(AppleTower):
     def __init__(self, x, y, scale=2.0, img='imgs/Грушевое_дерево.png', dmg=34):
         super().__init__(x, y, scale, img, dmg)
-        self.range = 250
+        self.range = 200
         self.upg_cost = 80
         self.fire_rate = 0.7
 
