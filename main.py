@@ -430,6 +430,19 @@ class GameBase(arcade.View):
         self.move_up = False
         self.move_down = False
 
+        self.button1 = UIFlatButton(text=f'Яблоня {tower_types["apple"]}', width=220, height=40, font_name="Pharmakon")
+        self.button1.on_click = lambda build_apple: self.build_tower("apple")
+
+        self.button2 = UIFlatButton(text=f'Орех {tower_types["nut"]}', width=220, height=40, font_name="Pharmakon")
+        self.button2.on_click = lambda build_apple: self.build_tower("nut")
+
+        self.button3 = UIFlatButton(text=f'Вишня {tower_types["cherry"]}', width=220, height=40, font_name="Pharmakon")
+        self.button3.on_click = lambda build_apple: self.build_tower("cherry")
+
+        self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
+        self.leave_menu_button.on_click = lambda leave: self.close_spot_menu(spot)
+
+
         self.cam_speed = 900
         self.zoom = 1.0
         self.zoom_min = 0.5
@@ -437,8 +450,13 @@ class GameBase(arcade.View):
         self.world_width = 3840
         self.world_height = 1080
         self.endTimer = 0
+        self.zabs = arcade.SpriteList()
+        self.zab = arcade.Sprite('imgs/забор.png', 1)
+        self.zab.center_x = self.path[-1][0] + 45
+        self.zab.center_y = self.path[-1][1]
+        self.zabs.append(self.zab)
 
-        self.money = 100
+        self.money = 58
         self.spawn_timer = 0.0
         self.base_hp = 3
         self.start = 0
@@ -770,6 +788,7 @@ class GameBase(arcade.View):
             self.ui.remove(self.button2)
             self.ui.remove(self.button1)
             self.ui.remove(self.leave_menu_button)
+            self.zabs.clear()
             for tower in self.towers:
                 self.ui.remove(tower.label)
             if self.endTimer >= 3:
@@ -825,6 +844,7 @@ class GameBase(arcade.View):
         self.enemies.draw()
         self.towers.draw()
         self.projectiles.draw()
+        self.zabs.draw()
 
         for e in self.emitters:
             e.draw()
