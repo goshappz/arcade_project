@@ -1060,7 +1060,6 @@ class CherryTower(AppleTower):
             return
 
         for target in targets:
-            print(42)
             projectile = Projectile_Cherry(self.center_x, self.center_y, target, speed=self.projectile_speed, damage=self.damage)
             projectiles.append(projectile)
         self.cooldown = 1.0 / self.fire_rate
