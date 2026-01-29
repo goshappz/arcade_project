@@ -446,16 +446,12 @@ class GameBase(arcade.View):
         self.move_down = False
 
         self.button1 = UIFlatButton(text=f'Яблоня {tower_types["apple"]}', width=220, height=40, font_name="Pharmakon")
-        self.button1.on_click = lambda build_apple: self.build_tower("apple")
 
         self.button2 = UIFlatButton(text=f'Орех {tower_types["nut"]}', width=220, height=40, font_name="Pharmakon")
-        self.button2.on_click = lambda build_apple: self.build_tower("nut")
 
         self.button3 = UIFlatButton(text=f'Вишня {tower_types["cherry"]}', width=220, height=40, font_name="Pharmakon")
-        self.button3.on_click = lambda build_apple: self.build_tower("cherry")
 
         self.leave_menu_button = UIFlatButton(text=f'Выйти', width=220, height=40, font_name="Pharmakon")
-        self.leave_menu_button.on_click = lambda leave: self.close_spot_menu()
 
         self.cam_speed = 900
         self.zoom = 1.0
@@ -1161,7 +1157,7 @@ class CherryTower(AppleTower):
 window = arcade.Window(
     width=WIDHT,
     height=HEIGHT,
-    title="Tower Defense",
+    title="Slugs vs. Fruits",
     fullscreen=False,
     resizable=False,
     style=arcade.Window.WINDOW_STYLE_BORDERLESS
