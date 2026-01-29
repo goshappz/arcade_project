@@ -360,7 +360,7 @@ class Enemy(arcade.Sprite):
 
 class Snail(Enemy):
     def __init__(self, path_points, speed=75, hp=200, scale=2,
-                 img='imgs/дорога1.png', money=12, SPARK_TEX=[
+                 img='imgs/улитка.png', money=12, SPARK_TEX=[
                 arcade.make_soft_circle_texture(6, (60, 179, 113)),
                 arcade.make_soft_circle_texture(6, (0, 100, 0)),
                 arcade.make_soft_circle_texture(6, (128, 128, 0)),
@@ -438,7 +438,7 @@ class GameBase(arcade.View):
         self.world_height = 1080
         self.endTimer = 0
 
-        self.money = 58
+        self.money = 100
         self.spawn_timer = 0.0
         self.base_hp = 3
         self.start = 0
@@ -1018,7 +1018,7 @@ class Projectile(arcade.Sprite):
 class Projectile_Nut(Projectile):
     def __init__(self, start_x, start_y, enemy, speed, damage):
         super().__init__(start_x, start_y, enemy, speed, damage)
-        self.texture = arcade.load_texture("imgs/яблоко_снаряд.png")
+        self.texture = arcade.load_texture("imgs/орех_снаряд.png")
         self.hits = 0
         self.range = 200
         self.enemyz = []
@@ -1057,13 +1057,13 @@ class Projectile_Nut(Projectile):
 class Projectile_Cherry(Projectile):
     def __init__(self, start_x, start_y, enemy, speed, damage):
         super().__init__(start_x, start_y, enemy, speed, damage)
-        self.texture = arcade.load_texture("imgs/яблоко_снаряд.png")
+        self.texture = arcade.load_texture("imgs/вишня_снаряд.png")
 
 
 
 
 class NutsTower(AppleTower):
-    def __init__(self, x, y, scale=2.0, img='imgs/Ореховое_дерево.png', dmg=50):
+    def __init__(self, x, y, scale=3.0, img='imgs/Ореховое_дерево.png', dmg=50):
         super().__init__(x, y, scale, img, dmg)
         self.range = 300
         self.upg_cost = 70
@@ -1083,7 +1083,7 @@ class NutsTower(AppleTower):
         self.cooldown = 1.0 / self.fire_rate
 
 class CherryTower(AppleTower):
-    def __init__(self, x, y, scale=2.0, img='imgs/Грушевое_дерево.png', dmg=34):
+    def __init__(self, x, y, scale=3.0, img='imgs/вишневое_дерево.png', dmg=34):
         super().__init__(x, y, scale, img, dmg)
         self.range = 200
         self.upg_cost = 80
